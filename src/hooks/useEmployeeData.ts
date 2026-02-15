@@ -1,0 +1,52 @@
+import { useState, useEffect, useCallback } from 'react';
+import type { EmployeeData, DayEntry } from '@/types/employee';
+
+const STORAGE_KEY = 'edilrestrutturazioni_data';
+
+function loadData(): EmployeeData {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return { employees: [] };
+}
+
+export function forceSave(data: EmployeeData) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+export function useEmployeeData() {
+  const [data, setData] = useState<EmployeeData>(loadData);
+
+  useEffect(() => {
+    const timer = setTimeout(() => forceSave(data), 500);
+    return () => clearTimeout(timer);
+  }, [data]);
+
+  const addEmployee = useCallback((name: string) => {
+    setData(prev => ({
+      employees: [
+        ...prev.employees,
+        { id: crypto.randomUUID(), name, days: {} },
+      ],
+    }));
+  }, []);
+
+  const removeEmployee = useCallback((id: string) => {
+    setData(prev => ({
+      employees: prev.employees.filter(e => e.id !== id),
+    }));
+  }, []);
+
+  const updateDayEntry = useCallback((employeeId: string, dateKey: string, entry: DayEntry) => {
+    setData(prev => ({
+      employees: prev.employees.map(e =>
+        e.id === employeeId
+          ? { ...e, days: { ...e.days, [dateKey]: entry } }
+          : e
+      ),
+    }));
+  }, []);
+
+  return { data, addEmployee, removeEmployee, updateDayEntry };
+}
