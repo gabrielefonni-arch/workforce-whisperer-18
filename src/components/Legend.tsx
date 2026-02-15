@@ -1,7 +1,7 @@
 const items = [
   { label: 'Presente', className: 'bg-success/20 border-success/40' },
-  { label: 'Mezza giornata', className: 'bg-warning/20 border-warning/40' },
-  { label: 'Assente', className: 'bg-absence/20 border-absence/40' },
+  { label: 'Infortunio', className: 'bg-warning/20 border-warning/40' },
+  { label: 'Malattia', className: 'bg-absence/20 border-absence/40' },
   { label: 'Festivo', className: 'bg-info/20 border-info/40' },
 ];
 
