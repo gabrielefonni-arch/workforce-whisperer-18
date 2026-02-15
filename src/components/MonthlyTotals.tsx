@@ -17,16 +17,16 @@ export function MonthlyTotals({ employees, year, month }: Props) {
       {employees.map(emp => {
         let totalHours = 0;
         let presentDays = 0;
-        let absentDays = 0;
-        let halfDays = 0;
+        let injuryDays = 0;
+        let sickDays = 0;
 
         days.forEach(d => {
           const entry = emp.days[dateKey(d)];
           if (entry) {
             totalHours += entry.hours;
             if (entry.status === 'present') presentDays++;
-            if (entry.status === 'absent') absentDays++;
-            if (entry.status === 'half') halfDays++;
+            if (entry.status === 'injury') injuryDays++;
+            if (entry.status === 'sick') sickDays++;
           }
         });
 
@@ -43,12 +43,12 @@ export function MonthlyTotals({ employees, year, month }: Props) {
                 <div className="text-muted-foreground">pres.</div>
               </div>
               <div className="text-center">
-                <div className="font-bold text-warning">{halfDays}</div>
-                <div className="text-muted-foreground">½</div>
+                <div className="font-bold text-warning">{injuryDays}</div>
+                <div className="text-muted-foreground">infor.</div>
               </div>
               <div className="text-center">
-                <div className="font-bold text-absence">{absentDays}</div>
-                <div className="text-muted-foreground">ass.</div>
+                <div className="font-bold text-absence">{sickDays}</div>
+                <div className="text-muted-foreground">mal.</div>
               </div>
             </div>
           </div>

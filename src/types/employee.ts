@@ -1,9 +1,9 @@
-export type DayStatus = 'present' | 'absent' | 'half' | 'holiday' | '';
+export type DayStatus = 'present' | 'injury' | 'sick' | 'holiday' | '';
 
 export interface DayEntry {
   status: DayStatus;
   hours: number;
-  note?: string;
+  location?: string;
 }
 
 export interface Employee {
