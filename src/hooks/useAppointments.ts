@@ -4,8 +4,16 @@ import type { AppointmentData, Appointment, AppointmentStatus } from '@/types/ap
 function loadData(storageKey: string): AppointmentData {
   try {
     const raw = localStorage.getItem(storageKey);
-    if (raw) return JSON.parse(raw);
-  } catch {}
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && Array.isArray(parsed.appointments)) {
+        return parsed;
+      }
+    }
+  } catch {
+    // Corrupted data — reset
+    try { localStorage.removeItem(storageKey); } catch {}
+  }
   return { appointments: [] };
 }
 
