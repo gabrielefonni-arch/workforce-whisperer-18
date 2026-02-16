@@ -7,7 +7,8 @@ import { Legend } from '@/components/Legend';
 import { exportToPDF } from '@/lib/pdfExport';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { UserPlus, Download, Trash2, Save, HardHat } from 'lucide-react';
+import { UserPlus, Download, Trash2, Save } from 'lucide-react';
+import logoImg from '@/assets/logo.png';
 import { toast } from 'sonner';
 
 const Index = () => {
@@ -55,8 +56,8 @@ const Index = () => {
       <header className="bg-primary text-primary-foreground sticky top-0 z-50 shadow-lg">
         <div className="max-w-[1600px] mx-auto px-3 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="bg-accent rounded-lg p-1.5">
-              <HardHat className="h-5 w-5 text-accent-foreground" />
+            <div className="bg-accent rounded-lg p-1">
+              <img src={logoImg} alt="Logo Edilrestrutturazioni" className="h-7 w-7 object-contain" />
             </div>
             <div className="min-w-0">
               <h1 className="text-base font-extrabold tracking-tight leading-tight">Edilrestrutturazioni</h1>
