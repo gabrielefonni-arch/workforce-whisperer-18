@@ -14,6 +14,9 @@ self.addEventListener('push', (event) => {
       badge: '/pwa-192x192.png',
       tag: data.tag || 'appointment',
       data: data.url || '/',
+      requireInteraction: true, // Stays visible until user taps
+      renotify: true, // Re-alert even if same tag
+      vibrate: [300, 100, 300, 100, 300], // Strong vibration pattern
     })
   );
 });
