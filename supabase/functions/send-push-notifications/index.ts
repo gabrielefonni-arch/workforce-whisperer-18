@@ -60,16 +60,7 @@ async function createVapidJwt(audience: string, subject: string, privateKeyD: st
     new TextEncoder().encode(unsignedToken)
   );
 
-  // Convert DER signature to raw r||s format for JWT
-  const sigBytes = new Uint8Array(sig);
-  let rawSig: Uint8Array;
-  if (sigBytes.length === 64) {
-    rawSig = sigBytes;
-  } else {
-    // WebCrypto already returns raw format for ECDSA P-256
-    rawSig = sigBytes;
-  }
-
+  const rawSig = new Uint8Array(sig);
   const token = `${unsignedToken}.${b64url(rawSig)}`;
   return {
     authorization: `WebPush ${token}`,
@@ -85,7 +76,6 @@ async function encryptPayload(
 ): Promise<{ encrypted: Uint8Array; salt: Uint8Array; localPublicKey: Uint8Array }> {
   const te = new TextEncoder();
 
-  // Generate local ECDH key pair
   const localKeyPair = await crypto.subtle.generateKey(
     { name: 'ECDH', namedCurve: 'P-256' },
     true,
@@ -93,38 +83,31 @@ async function encryptPayload(
   );
   const localPubRaw = new Uint8Array(await crypto.subtle.exportKey('raw', localKeyPair.publicKey));
 
-  // Import subscriber's p256dh key
   const subPubBytes = b64urlDecode(p256dhKey);
   const subPubKey = await crypto.subtle.importKey(
     'raw', subPubBytes, { name: 'ECDH', namedCurve: 'P-256' }, false, []
   );
 
-  // Derive shared secret via ECDH
   const sharedSecret = new Uint8Array(await crypto.subtle.deriveBits(
     { name: 'ECDH', public: subPubKey },
     localKeyPair.privateKey,
     256
   ));
 
-  // Auth secret
   const authBytes = b64urlDecode(authSecret);
 
-  // HKDF to derive IKM
   const authInfo = te.encode('WebPush: info\0');
   const ikm_info = concat(authInfo, subPubBytes, localPubRaw);
   const ikm = await hkdf(authBytes, sharedSecret, ikm_info, 32);
 
-  // Salt (random 16 bytes)
   const salt = crypto.getRandomValues(new Uint8Array(16));
 
-  // Derive CEK and nonce
   const cekInfo = te.encode('Content-Encoding: aes128gcm\0');
   const nonceInfo = te.encode('Content-Encoding: nonce\0');
   const cek = await hkdf(salt, ikm, cekInfo, 16);
   const nonce = await hkdf(salt, ikm, nonceInfo, 12);
 
-  // Pad and encrypt
-  const paddedPayload = concat(new Uint8Array(te.encode(payload)), new Uint8Array([2])); // delimiter byte
+  const paddedPayload = concat(new Uint8Array(te.encode(payload)), new Uint8Array([2]));
 
   const cryptoKey = await crypto.subtle.importKey('raw', cek, 'AES-GCM', false, ['encrypt']);
   const encrypted = new Uint8Array(await crypto.subtle.encrypt(
@@ -147,7 +130,6 @@ async function hkdf(salt: Uint8Array, ikm: Uint8Array, info: Uint8Array, length:
 }
 
 function buildAes128gcmBody(salt: Uint8Array, localPubKey: Uint8Array, encrypted: Uint8Array): Uint8Array {
-  // Header: salt(16) + rs(4) + idlen(1) + keyid(65) + encrypted
   const rs = new Uint8Array(4);
   new DataView(rs.buffer).setUint32(0, 4096, false);
   return concat(salt, rs, new Uint8Array([localPubKey.length]), localPubKey, encrypted);
@@ -167,6 +149,8 @@ serve(async (req) => {
     const todayStr = now.toISOString().slice(0, 10);
     const nowTime = now.toTimeString().slice(0, 5);
 
+    console.log(`[PUSH] Checking appointments at ${todayStr} ${nowTime}`);
+
     const { data: appointments, error: apptErr } = await supabase
       .from('appointments')
       .select('*')
@@ -175,10 +159,14 @@ serve(async (req) => {
 
     if (apptErr) throw apptErr;
 
+    console.log(`[PUSH] Found ${appointments?.length || 0} pending appointments with date <= ${todayStr}`);
+
     const dueAppointments = (appointments || []).filter(a => {
       if (a.date < todayStr) return true;
       return a.time <= nowTime;
     });
+
+    console.log(`[PUSH] ${dueAppointments.length} due appointments after time filter`);
 
     if (dueAppointments.length === 0) {
       return new Response(JSON.stringify({ sent: 0, message: 'No due appointments' }), {
@@ -196,16 +184,29 @@ serve(async (req) => {
       byUser.set(a.user_id, arr);
     }
 
+    console.log(`[PUSH] Users with due appointments: ${[...byUser.keys()].join(', ')}`);
+
+    // Get ALL subscriptions at once
+    const { data: allSubs, error: subErr } = await supabase
+      .from('push_subscriptions')
+      .select('*');
+    
+    if (subErr) console.error(`[PUSH] Error fetching subscriptions:`, subErr);
+    console.log(`[PUSH] Total push subscriptions in DB: ${allSubs?.length || 0}`);
+    if (allSubs) {
+      for (const s of allSubs) {
+        console.log(`[PUSH] Sub: user=${s.user_id}, endpoint=${s.endpoint.substring(0, 60)}...`);
+      }
+    }
+
     let totalSent = 0;
     const errors: string[] = [];
 
     for (const [userId, userAppts] of byUser) {
-      const { data: subs } = await supabase
-        .from('push_subscriptions')
-        .select('*')
-        .eq('user_id', userId);
+      const subs = (allSubs || []).filter(s => s.user_id === userId);
+      console.log(`[PUSH] User ${userId}: ${subs.length} subscriptions, ${userAppts.length} due appointments`);
 
-      if (!subs || subs.length === 0) continue;
+      if (subs.length === 0) continue;
 
       for (const appt of userAppts) {
         const payload = JSON.stringify({
@@ -218,8 +219,9 @@ serve(async (req) => {
         for (const sub of subs) {
           try {
             const audience = new URL(sub.endpoint).origin;
+            console.log(`[PUSH] Sending to ${audience} for appt "${appt.name}"`);
+            
             const vapidHeaders = await createVapidJwt(audience, 'mailto:noreply@edilristrutturazioni.app', privateKeyD, publicKeyRaw);
-
             const { encrypted, salt, localPublicKey } = await encryptPayload(payload, sub.p256dh, sub.auth);
             const body = buildAes128gcmBody(salt, localPublicKey, encrypted);
 
@@ -236,28 +238,33 @@ serve(async (req) => {
               body,
             });
 
+            const statusCode = res.status;
+            const respBody = await res.text();
+            console.log(`[PUSH] Response: HTTP ${statusCode} - ${respBody}`);
+
             if (res.ok || res.status === 201) {
               totalSent++;
             } else {
-              const statusCode = res.status;
-              const respBody = await res.text();
               errors.push(`HTTP ${statusCode}: ${respBody}`);
               if (statusCode === 410 || statusCode === 404) {
                 await supabase.from('push_subscriptions').delete().eq('id', sub.id);
+                console.log(`[PUSH] Removed expired subscription ${sub.id}`);
               }
             }
           } catch (e: unknown) {
+            console.error(`[PUSH] Send error:`, e);
             errors.push(String(e));
           }
         }
       }
     }
 
+    console.log(`[PUSH] Done. Sent: ${totalSent}, Errors: ${errors.length}`);
     return new Response(JSON.stringify({ sent: totalSent, due: dueAppointments.length, errors }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error('Push error:', error);
+    console.error('[PUSH] Fatal error:', error);
     return new Response(JSON.stringify({ error: String(error) }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

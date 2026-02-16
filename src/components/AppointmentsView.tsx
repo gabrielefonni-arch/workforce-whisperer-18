@@ -21,7 +21,7 @@ const ALL_STATUSES: AppointmentStatus[] = ['pending', 'done', 'cancelled', 'forg
 export function AppointmentsView() {
   const { data, addAppointment, removeAppointment, updateStatus } = useAppointments();
   const appointments = data.appointments ?? [];
-  const { enabled: notifActive, toggleEnabled, isSupported: notifSupported } = useAppointmentNotifications(appointments);
+  const { enabled: notifActive, toggleEnabled, isSupported: notifSupported, registering } = useAppointmentNotifications(appointments);
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
   const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
@@ -79,9 +79,16 @@ export function AppointmentsView() {
               variant={notifActive ? 'default' : 'outline'}
               size="sm"
               className="gap-1 text-xs h-7 px-2"
+              disabled={registering}
             >
-              {notifActive ? <Bell className="h-3.5 w-3.5" /> : <BellOff className="h-3.5 w-3.5" />}
-              {notifActive ? 'Notifiche ON' : 'Notifiche OFF'}
+              {registering ? (
+                <>Registrazione...</>
+              ) : (
+                <>
+                  {notifActive ? <Bell className="h-3.5 w-3.5" /> : <BellOff className="h-3.5 w-3.5" />}
+                  {notifActive ? 'Notifiche ON' : 'Notifiche OFF'}
+                </>
+              )}
             </Button>
           )}
         </div>

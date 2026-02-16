@@ -7,7 +7,7 @@ const NOTIF_ENABLED_KEY = 'appt_notifications_enabled';
 const VAPID_PUBLIC_KEY = 'BD__ChpFvLAAqmk8bKI4ddqK5i-oTBGR1_2VtXdn3VlN2x6IDLi6S9DLQzdA1_EEIWABGvZBVzKPNvNt90qpkbY';
 
 function isNotificationSupported(): boolean {
-  return 'Notification' in window && 'serviceWorker' in navigator;
+  return 'Notification' in window && 'serviceWorker' in navigator && 'PushManager' in window;
 }
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
@@ -19,39 +19,77 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
   return outputArray;
 }
 
-async function registerPushSubscription(userId: string): Promise<PushSubscription | null> {
+function toBase64Url(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (const b of bytes) binary += String.fromCharCode(b);
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+async function registerPushSubscription(userId: string): Promise<boolean> {
   try {
-    const registration = await navigator.serviceWorker.register('/sw-push.js');
-    await navigator.serviceWorker.ready;
+    console.log('[Push] Starting registration for user:', userId);
+    
+    // Register the push service worker
+    const registration = await navigator.serviceWorker.register('/sw-push.js', { scope: '/' });
+    console.log('[Push] SW registered, scope:', registration.scope);
+    
+    // Wait for SW to be ready
+    const ready = await navigator.serviceWorker.ready;
+    console.log('[Push] SW ready');
 
-    const mgr = (registration as any).pushManager;
-    if (!mgr) return null;
-
-    let subscription = await mgr.getSubscription();
-    if (!subscription) {
-      subscription = await mgr.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-      });
+    const pushManager = (ready as any).pushManager;
+    if (!pushManager) {
+      console.error('[Push] PushManager not available');
+      return false;
     }
+
+    // Unsubscribe from any existing subscription (might be with old key)
+    const existing = await pushManager.getSubscription();
+    if (existing) {
+      console.log('[Push] Unsubscribing from old subscription');
+      await existing.unsubscribe();
+    }
+
+    // Create new subscription with current VAPID key
+    const subscription = await pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+    });
+    console.log('[Push] New subscription created:', subscription.endpoint.substring(0, 60));
 
     const key = subscription.getKey('p256dh');
     const auth = subscription.getKey('auth');
-    if (!key || !auth) return null;
+    if (!key || !auth) {
+      console.error('[Push] Missing p256dh or auth keys');
+      return false;
+    }
 
-    const p256dh = btoa(String.fromCharCode(...new Uint8Array(key))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-    const authKey = btoa(String.fromCharCode(...new Uint8Array(auth))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    const p256dh = toBase64Url(key);
+    const authKey = toBase64Url(auth);
 
-    // Upsert subscription
-    await supabase.from('push_subscriptions').upsert(
-      { user_id: userId, endpoint: subscription.endpoint, p256dh: p256dh, auth: authKey },
-      { onConflict: 'user_id,endpoint' }
-    );
+    console.log('[Push] Saving subscription to DB...');
+    
+    // Delete old subscriptions for this user first, then insert new
+    await supabase.from('push_subscriptions').delete().eq('user_id', userId);
+    
+    const { error } = await supabase.from('push_subscriptions').insert({
+      user_id: userId,
+      endpoint: subscription.endpoint,
+      p256dh: p256dh,
+      auth: authKey,
+    });
 
-    return subscription;
+    if (error) {
+      console.error('[Push] DB save error:', error);
+      return false;
+    }
+
+    console.log('[Push] Subscription saved successfully!');
+    return true;
   } catch (e) {
-    console.error('Push registration failed:', e);
-    return null;
+    console.error('[Push] Registration failed:', e);
+    return false;
   }
 }
 
@@ -63,6 +101,7 @@ export function useAppointmentNotifications(appointments: Appointment[]) {
   const [permission, setPermission] = useState<NotificationPermission>(
     isNotificationSupported() ? Notification.permission : 'denied'
   );
+  const [registering, setRegistering] = useState(false);
   const notifiedIds = useRef<Set<string>>(new Set());
 
   const toggleEnabled = useCallback(async () => {
@@ -76,9 +115,15 @@ export function useAppointmentNotifications(appointments: Appointment[]) {
       } else if (Notification.permission === 'denied') {
         return;
       }
-      // Register push subscription for server-side notifications
+      
       if (user) {
-        await registerPushSubscription(user.id);
+        setRegistering(true);
+        const success = await registerPushSubscription(user.id);
+        setRegistering(false);
+        if (!success) {
+          console.error('[Push] Registration failed, not enabling');
+          return;
+        }
       }
       setEnabled(true);
       localStorage.setItem(NOTIF_ENABLED_KEY, 'true');
@@ -95,7 +140,7 @@ export function useAppointmentNotifications(appointments: Appointment[]) {
     }
   }, [enabled, user]);
 
-  // Keep client-side fallback for when app is open
+  // Client-side fallback for when app is open
   useEffect(() => {
     if (!enabled || !isNotificationSupported() || Notification.permission !== 'granted') return;
 
@@ -128,5 +173,5 @@ export function useAppointmentNotifications(appointments: Appointment[]) {
 
   const isActive = enabled && permission === 'granted';
 
-  return { enabled: isActive, toggleEnabled, isSupported: isNotificationSupported(), permission };
+  return { enabled: isActive, toggleEnabled, isSupported: isNotificationSupported(), permission, registering };
 }
