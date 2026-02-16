@@ -4,8 +4,15 @@ import type { EmployeeData, DayEntry } from '@/types/employee';
 function loadData(storageKey: string): EmployeeData {
   try {
     const raw = localStorage.getItem(storageKey);
-    if (raw) return JSON.parse(raw);
-  } catch {}
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && Array.isArray(parsed.employees)) {
+        return parsed;
+      }
+    }
+  } catch {
+    try { localStorage.removeItem(storageKey); } catch {}
+  }
   return { employees: [] };
 }
 
