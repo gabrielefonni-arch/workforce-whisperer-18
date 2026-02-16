@@ -1,25 +1,28 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { EmployeeData, DayEntry } from '@/types/employee';
 
-const STORAGE_KEY = 'edilrestrutturazioni_data';
-
-function loadData(): EmployeeData {
+function loadData(storageKey: string): EmployeeData {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(storageKey);
     if (raw) return JSON.parse(raw);
   } catch {}
   return { employees: [] };
 }
 
-export function forceSave(data: EmployeeData) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+export function forceSave(data: EmployeeData, storageKey: string) {
+  localStorage.setItem(storageKey, JSON.stringify(data));
 }
 
-export function useEmployeeData() {
-  const [data, setData] = useState<EmployeeData>(loadData);
+export function useEmployeeData(storageKey: string) {
+  const [data, setData] = useState<EmployeeData>(() => loadData(storageKey));
+
+  // Reload data when storageKey changes (company switch)
+  useEffect(() => {
+    setData(loadData(storageKey));
+  }, [storageKey]);
 
   useEffect(() => {
-    const timer = setTimeout(() => forceSave(data), 500);
+    const timer = setTimeout(() => forceSave(data, storageKey), 500);
     return () => clearTimeout(timer);
   }, [data]);
 

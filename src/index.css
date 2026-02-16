@@ -83,6 +83,20 @@
   }
 }
 
+/* Ditta 2 theme – blue/teal palette */
+.theme-ditta2 {
+  --primary: 210 70% 38%;
+  --primary-foreground: 0 0% 100%;
+  --accent: 185 70% 42%;
+  --accent-foreground: 210 30% 10%;
+  --ring: 210 70% 38%;
+  --success: 145 63% 42%;
+  --success-foreground: 0 0% 100%;
+  --warning: 38 92% 50%;
+  --info: 210 70% 50%;
+  --absence: 0 72% 51%;
+}
+
 @layer base {
   * {
     @apply border-border;

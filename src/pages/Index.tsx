@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useEmployeeData, forceSave } from '@/hooks/useEmployeeData';
+import { useCompany } from '@/contexts/CompanyContext';
 import { WeekMonthNavigator } from '@/components/WeekMonthNavigator';
 import { EmployeeGrid } from '@/components/EmployeeGrid';
 import { MonthlyTotals } from '@/components/MonthlyTotals';
@@ -10,9 +11,11 @@ import { Input } from '@/components/ui/input';
 import { UserPlus, Download, Trash2, Save } from 'lucide-react';
 import logoImg from '@/assets/logo.png';
 import { toast } from 'sonner';
+import { CompanySelector } from '@/components/CompanySelector';
 
 const Index = () => {
-  const { data, addEmployee, removeEmployee, updateDayEntry } = useEmployeeData();
+  const { currentCompany } = useCompany();
+  const { data, addEmployee, removeEmployee, updateDayEntry } = useEmployeeData(currentCompany.storageKey);
   const [newName, setNewName] = useState('');
   const [selectedYear, setSelectedYear] = useState(2026);
   const [selectedMonth, setSelectedMonth] = useState(2);
@@ -46,19 +49,19 @@ const Index = () => {
   };
 
   const handleSave = () => {
-    forceSave(data);
+    forceSave(data, currentCompany.storageKey);
     toast.success('Modifiche salvate con successo!');
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className={`min-h-screen bg-background ${currentCompany.themeClass}`}>
       {/* Header – compact mobile */}
       <header className="bg-primary text-primary-foreground sticky top-0 z-50 shadow-lg">
         <div className="max-w-[1600px] mx-auto px-3 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <img src={logoImg} alt="Logo Edilristrutturazioni" className="h-8 w-8 object-contain" />
             <div className="min-w-0">
-              <h1 className="text-base font-extrabold tracking-tight leading-tight">Edilristrutturazioni</h1>
+              <h1 className="text-base font-extrabold tracking-tight leading-tight">{currentCompany.name}</h1>
               <p className="text-[10px] opacity-75 font-medium hidden sm:block">Gestione Dipendenti · Presenze</p>
             </div>
           </div>
@@ -72,6 +75,10 @@ const Index = () => {
               <span className="hidden sm:inline">PDF</span>
             </Button>
           </div>
+        </div>
+        {/* Company Selector */}
+        <div className="max-w-[1600px] mx-auto px-3 pb-2 pt-1">
+          <CompanySelector />
         </div>
       </header>
 
