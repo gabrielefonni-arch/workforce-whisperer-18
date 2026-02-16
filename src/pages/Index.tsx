@@ -15,6 +15,7 @@ import { UserPlus, Download, Trash2, LogOut, Save } from 'lucide-react';
 import logoImg from '@/assets/logo.png';
 import { toast } from 'sonner';
 import { CompanySelector } from '@/components/CompanySelector';
+import { SettingsSheet } from '@/components/SettingsSheet';
 
 const Index = () => {
   const { currentCompany, currentSection } = useCompany();
@@ -84,6 +85,7 @@ const Index = () => {
                 <span className="hidden sm:inline">PDF</span>
               </Button>
             )}
+            <SettingsSheet />
             <Button onClick={handleSignOut} variant="secondary" size="sm" className="gap-1 text-xs px-2.5">
               <LogOut className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Esci</span>
