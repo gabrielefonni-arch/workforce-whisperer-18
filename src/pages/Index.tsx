@@ -11,7 +11,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { exportToPDF } from '@/lib/pdfExport';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { UserPlus, Download, Trash2, LogOut } from 'lucide-react';
+import { UserPlus, Download, Trash2, LogOut, Save } from 'lucide-react';
 import logoImg from '@/assets/logo.png';
 import { toast } from 'sonner';
 import { CompanySelector } from '@/components/CompanySelector';
@@ -74,6 +74,10 @@ const Index = () => {
             </div>
           </div>
           <div className="flex gap-1.5">
+            <Button onClick={() => toast.success('Dati salvati correttamente')} variant="secondary" size="sm" className="gap-1 text-xs px-2.5">
+              <Save className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Salva</span>
+            </Button>
             {!isAppointments && (
               <Button onClick={handleExport} variant="secondary" size="sm" className="gap-1 text-xs px-2.5">
                 <Download className="h-3.5 w-3.5" />
