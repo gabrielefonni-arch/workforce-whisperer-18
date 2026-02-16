@@ -19,64 +19,73 @@ export function exportToPDF(employees: Employee[], year: number, month: number, 
   });
 
   let html = `<html><head><style>
-    @page { size: A4 landscape; margin: 12mm; }
+    @page { size: A4 landscape; margin: 14mm 16mm; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 10px; color: #1a1a1a; }
-    
-    .header { 
-      display: flex; justify-content: space-between; align-items: flex-end;
-      border-bottom: 3px solid #d97706; padding-bottom: 8px; margin-bottom: 14px;
-    }
-    .header h1 { font-size: 18px; font-weight: 800; color: #92400e; letter-spacing: -0.3px; }
-    .header .subtitle { font-size: 12px; color: #666; font-weight: 500; }
-    .header .date-info { font-size: 11px; color: #92400e; font-weight: 700; text-align: right; }
+    body { font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; font-size: 10px; color: #2d2d2d; background: #fff; }
 
-    table { border-collapse: collapse; width: 100%; margin-bottom: 18px; }
-    th { 
-      background: #92400e; color: #fff; font-weight: 700; font-size: 9px;
-      padding: 5px 3px; text-align: center; text-transform: uppercase; letter-spacing: 0.3px;
+    .header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 20px; margin-bottom: 20px;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      border-radius: 10px; color: #fff;
     }
-    th.name-col { text-align: left; padding-left: 8px; min-width: 120px; }
-    th.total-col { background: #78350f; }
-    
-    td { 
-      border: 1px solid #e5e0d8; padding: 4px 2px; text-align: center; 
-      font-size: 9px; vertical-align: middle;
+    .header h1 { font-size: 20px; font-weight: 800; letter-spacing: 0.5px; margin-bottom: 2px; }
+    .header .subtitle { font-size: 11px; opacity: 0.7; font-weight: 400; letter-spacing: 0.3px; }
+    .header .date-info { 
+      font-size: 11px; text-align: right; opacity: 0.85; line-height: 1.6;
     }
-    td.name-cell { 
-      text-align: left; padding-left: 8px; font-weight: 700; font-size: 10px;
-      background: #fef7ed; border-left: 3px solid #d97706;
-    }
-    td.total-cell { font-weight: 800; font-size: 11px; background: #fef3c7; }
-    
-    .weekend { background: #f5f0e8; }
-    .present { background: #d1fae5; }
-    .injury { background: #fef3c7; }
-    .sick { background: #fee2e2; }
-    .holiday { background: #dbeafe; }
-    
-    .hours { font-weight: 700; font-size: 10px; display: block; }
-    .location { font-size: 7px; color: #888; display: block; max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .status-badge { font-size: 7px; font-weight: 600; opacity: 0.7; }
+    .header .date-info strong { font-size: 14px; font-weight: 700; display: block; }
 
-    .day-header { font-size: 8px; display: block; font-weight: 400; opacity: 0.7; }
-    .day-num { font-size: 10px; display: block; font-weight: 700; }
+    table { border-collapse: separate; border-spacing: 0; width: 100%; margin-bottom: 22px; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 8px rgba(0,0,0,0.06); }
+    thead tr { background: linear-gradient(135deg, #1a1a2e, #0f3460); }
+    th {
+      color: #fff; font-weight: 600; font-size: 8.5px; padding: 8px 4px;
+      text-align: center; text-transform: uppercase; letter-spacing: 0.5px; border: none;
+    }
+    th.name-col { text-align: left; padding-left: 14px; min-width: 130px; font-size: 9px; }
+    th.total-col { background: rgba(255,255,255,0.1); }
 
-    /* Summary section */
-    .summary { page-break-before: auto; margin-top: 10px; }
-    .summary h2 { font-size: 13px; font-weight: 800; color: #92400e; margin-bottom: 8px; border-bottom: 2px solid #d97706; padding-bottom: 4px; }
-    .summary-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+    td {
+      border: 1px solid #f0eeeb; padding: 5px 3px; text-align: center;
+      font-size: 9px; vertical-align: middle; transition: background 0.2s;
+    }
+    td.name-cell {
+      text-align: left; padding-left: 14px; font-weight: 700; font-size: 10.5px;
+      background: #f8f9fc; border-left: 4px solid #0f3460; color: #1a1a2e;
+    }
+    td.total-cell { font-weight: 800; font-size: 12px; background: #eef2ff; color: #0f3460; }
+
+    .weekend { background: #f5f5f7; color: #aaa; }
+    .present { background: #e8f8ef; color: #1b7a43; }
+    .injury { background: #fff8e1; color: #b8860b; }
+    .sick { background: #fef0f0; color: #c0392b; }
+    .holiday { background: #e8f0fe; color: #2563eb; }
+
+    .hours { font-weight: 700; font-size: 11px; display: block; color: inherit; }
+    .location { font-size: 7px; color: #999; display: block; max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .status-badge { font-size: 7.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; }
+
+    .day-header { font-size: 7.5px; display: block; font-weight: 400; opacity: 0.65; text-transform: uppercase; }
+    .day-num { font-size: 11px; display: block; font-weight: 700; }
+
+    tbody tr:nth-child(even) td:not(.name-cell):not(.total-cell) { background-color: rgba(0,0,0,0.012); }
+    tbody tr:hover td { background-color: rgba(15,52,96,0.04) !important; }
+
+    .summary { margin-top: 16px; }
+    .summary h2 {
+      font-size: 14px; font-weight: 800; color: #1a1a2e; margin-bottom: 12px;
+      padding-bottom: 6px; border-bottom: 3px solid #0f3460; display: inline-block;
+    }
+    .summary-grid { display: flex; flex-wrap: wrap; gap: 12px; }
     .summary-card {
-      border: 1px solid #e5e0d8; border-radius: 6px; padding: 8px 12px; min-width: 200px; flex: 1;
-      background: #fefcf8;
+      border: 1px solid #e8e8ee; border-radius: 10px; padding: 12px 16px;
+      min-width: 210px; flex: 1; background: linear-gradient(135deg, #f8f9fc 0%, #fff 100%);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
     }
-    .summary-card h3 { font-size: 11px; font-weight: 700; margin-bottom: 4px; }
-    .summary-card .stat { display: inline-block; margin-right: 12px; font-size: 10px; }
-    .summary-card .stat strong { font-size: 13px; }
-    .summary-card .locations { margin-top: 4px; font-size: 9px; color: #666; }
-
-    tr:nth-child(even) td:not(.name-cell):not(.total-cell) { background-color: rgba(0,0,0,0.015); }
-    tr:hover td { background-color: rgba(217,119,6,0.05) !important; }
+    .summary-card h3 { font-size: 12px; font-weight: 700; margin-bottom: 6px; color: #1a1a2e; }
+    .summary-card .stat { display: inline-block; margin-right: 14px; font-size: 10px; color: #555; }
+    .summary-card .stat strong { font-size: 15px; color: #0f3460; display: block; line-height: 1.2; }
+    .summary-card .locations { margin-top: 6px; font-size: 9px; color: #888; }
   </style></head><body>`;
 
   // Header
