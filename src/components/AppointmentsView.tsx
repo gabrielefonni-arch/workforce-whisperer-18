@@ -4,7 +4,7 @@ import { useAppointmentNotifications } from '@/hooks/useAppointmentNotifications
 import type { AppointmentStatus } from '@/types/appointment';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Trash2, Calendar, MapPin, Clock, User } from 'lucide-react';
+import { Plus, Trash2, Calendar, MapPin, Clock, User, Bell, BellOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
@@ -25,7 +25,7 @@ interface Props {
 export function AppointmentsView({ storageKey }: Props) {
   const { data, addAppointment, removeAppointment, updateStatus } = useAppointments(storageKey);
   const appointments = data.appointments ?? [];
-  useAppointmentNotifications(appointments);
+  const { enabled: notifActive, toggleEnabled, isSupported: notifSupported } = useAppointmentNotifications(appointments);
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
   const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
@@ -75,7 +75,20 @@ export function AppointmentsView({ storageKey }: Props) {
     <div className="space-y-4">
       {/* Add form */}
       <div className="bg-card border rounded-lg p-3 space-y-2.5">
-        <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Nuovo Appuntamento</h3>
+        <div className="flex items-center justify-between">
+          <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Nuovo Appuntamento</h3>
+          {notifSupported && (
+            <Button
+              onClick={toggleEnabled}
+              variant={notifActive ? 'default' : 'outline'}
+              size="sm"
+              className="gap-1 text-xs h-7 px-2"
+            >
+              {notifActive ? <Bell className="h-3.5 w-3.5" /> : <BellOff className="h-3.5 w-3.5" />}
+              {notifActive ? 'Notifiche ON' : 'Notifiche OFF'}
+            </Button>
+          )}
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <div>
             <label className="text-xs text-muted-foreground mb-0.5 block">Nome e Cognome</label>

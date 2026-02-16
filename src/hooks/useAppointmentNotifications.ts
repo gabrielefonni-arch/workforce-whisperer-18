@@ -1,32 +1,46 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import type { Appointment } from '@/types/appointment';
+
+const NOTIF_ENABLED_KEY = 'appt_notifications_enabled';
 
 function isNotificationSupported(): boolean {
   return 'Notification' in window;
 }
 
 export function useAppointmentNotifications(appointments: Appointment[]) {
+  const [enabled, setEnabled] = useState(() => {
+    try { return localStorage.getItem(NOTIF_ENABLED_KEY) !== 'false'; } catch { return true; }
+  });
+  const [permission, setPermission] = useState<NotificationPermission>(
+    isNotificationSupported() ? Notification.permission : 'denied'
+  );
   const notifiedIds = useRef<Set<string>>(new Set());
 
-  const requestPermission = useCallback(async () => {
-    if (!isNotificationSupported()) return false;
-    if (Notification.permission === 'granted') return true;
-    if (Notification.permission === 'denied') return false;
-    const result = await Notification.requestPermission();
-    return result === 'granted';
-  }, []);
+  const toggleEnabled = useCallback(async () => {
+    if (!isNotificationSupported()) return;
+
+    if (!enabled) {
+      // Turning on — request permission if needed
+      if (Notification.permission === 'default') {
+        const result = await Notification.requestPermission();
+        setPermission(result);
+        if (result !== 'granted') return;
+      } else if (Notification.permission === 'denied') {
+        return; // Can't enable
+      }
+      setEnabled(true);
+      localStorage.setItem(NOTIF_ENABLED_KEY, 'true');
+    } else {
+      setEnabled(false);
+      localStorage.setItem(NOTIF_ENABLED_KEY, 'false');
+    }
+  }, [enabled]);
 
   useEffect(() => {
-    // Request permission on mount
-    requestPermission();
-  }, [requestPermission]);
-
-  useEffect(() => {
-    if (!isNotificationSupported() || Notification.permission !== 'granted') return;
+    if (!enabled || !isNotificationSupported() || Notification.permission !== 'granted') return;
 
     const checkAppointments = () => {
       const now = new Date();
-
       appointments.forEach(appt => {
         if (appt.status !== 'pending') return;
         if (notifiedIds.current.has(appt.id)) return;
@@ -41,7 +55,6 @@ export function useAppointmentNotifications(appointments: Appointment[]) {
               tag: `appt-${appt.id}`,
             });
           } catch {
-            // SW registration fallback for iOS PWA
             navigator.serviceWorker?.ready?.then(reg => {
               reg.showNotification('⏰ Appuntamento scaduto', {
                 body: `${appt.name} — ${appt.address} alle ${appt.time}`,
@@ -55,9 +68,11 @@ export function useAppointmentNotifications(appointments: Appointment[]) {
     };
 
     checkAppointments();
-    const interval = setInterval(checkAppointments, 30_000); // every 30s
+    const interval = setInterval(checkAppointments, 30_000);
     return () => clearInterval(interval);
-  }, [appointments]);
+  }, [appointments, enabled]);
 
-  return { requestPermission, isSupported: isNotificationSupported() };
+  const isActive = enabled && permission === 'granted';
+
+  return { enabled: isActive, toggleEnabled, isSupported: isNotificationSupported(), permission };
 }
