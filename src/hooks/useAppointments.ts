@@ -1,66 +1,71 @@
 import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import type { AppointmentData, Appointment, AppointmentStatus } from '@/types/appointment';
 
-function loadData(storageKey: string): AppointmentData {
-  try {
-    const raw = localStorage.getItem(storageKey);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (parsed && Array.isArray(parsed.appointments)) {
-        return parsed;
-      }
-    }
-  } catch {
-    // Corrupted data — reset
-    try { localStorage.removeItem(storageKey); } catch {}
-  }
-  return { appointments: [] };
-}
+export function useAppointments() {
+  const { user } = useAuth();
+  const [data, setData] = useState<AppointmentData>({ appointments: [] });
 
-function saveData(data: AppointmentData, storageKey: string) {
-  localStorage.setItem(storageKey, JSON.stringify(data));
-}
+  const loadData = useCallback(async () => {
+    if (!user) return;
+    const { data: appts, error } = await supabase
+      .from('appointments')
+      .select('*')
+      .order('created_at', { ascending: false });
 
-export function useAppointments(storageKey: string) {
-  const [data, setData] = useState<AppointmentData>(() => loadData(storageKey));
+    if (error) { console.error(error); return; }
+    setData({
+      appointments: (appts || []).map(a => ({
+        id: a.id,
+        name: a.name,
+        address: a.address,
+        date: a.date,
+        time: a.time,
+        status: a.status as AppointmentStatus,
+        notes: a.notes || '',
+      })),
+    });
+  }, [user]);
 
-  useEffect(() => {
-    setData(loadData(storageKey));
-  }, [storageKey]);
+  useEffect(() => { loadData(); }, [loadData]);
 
-  useEffect(() => {
-    const timer = setTimeout(() => saveData(data, storageKey), 500);
-    return () => clearTimeout(timer);
-  }, [data, storageKey]);
+  const addAppointment = useCallback(async (appt: Omit<Appointment, 'id'>) => {
+    if (!user) return;
+    const { data: row, error } = await supabase
+      .from('appointments')
+      .insert({ ...appt, user_id: user.id })
+      .select()
+      .single();
 
-  const addAppointment = useCallback((appt: Omit<Appointment, 'id'>) => {
+    if (error) { console.error(error); return; }
     setData(prev => ({
       appointments: [
-        { ...appt, id: crypto.randomUUID() },
+        { id: row.id, name: row.name, address: row.address, date: row.date, time: row.time, status: row.status as AppointmentStatus, notes: row.notes || '' },
         ...prev.appointments,
       ],
     }));
-  }, []);
+  }, [user]);
 
-  const updateAppointment = useCallback((id: string, updates: Partial<Appointment>) => {
+  const updateAppointment = useCallback(async (id: string, updates: Partial<Appointment>) => {
+    const { error } = await supabase.from('appointments').update(updates).eq('id', id);
+    if (error) { console.error(error); return; }
     setData(prev => ({
-      appointments: prev.appointments.map(a =>
-        a.id === id ? { ...a, ...updates } : a
-      ),
+      appointments: prev.appointments.map(a => a.id === id ? { ...a, ...updates } : a),
     }));
   }, []);
 
-  const removeAppointment = useCallback((id: string) => {
-    setData(prev => ({
-      appointments: prev.appointments.filter(a => a.id !== id),
-    }));
+  const removeAppointment = useCallback(async (id: string) => {
+    const { error } = await supabase.from('appointments').delete().eq('id', id);
+    if (error) { console.error(error); return; }
+    setData(prev => ({ appointments: prev.appointments.filter(a => a.id !== id) }));
   }, []);
 
-  const updateStatus = useCallback((id: string, status: AppointmentStatus) => {
+  const updateStatus = useCallback(async (id: string, status: AppointmentStatus) => {
+    const { error } = await supabase.from('appointments').update({ status }).eq('id', id);
+    if (error) { console.error(error); return; }
     setData(prev => ({
-      appointments: prev.appointments.map(a =>
-        a.id === id ? { ...a, status } : a
-      ),
+      appointments: prev.appointments.map(a => a.id === id ? { ...a, status } : a),
     }));
   }, []);
 

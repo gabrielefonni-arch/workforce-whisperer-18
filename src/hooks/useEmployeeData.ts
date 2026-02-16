@@ -1,54 +1,87 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { EmployeeData, DayEntry } from '@/types/employee';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import type { EmployeeData, DayEntry, Employee } from '@/types/employee';
 
-function loadData(storageKey: string): EmployeeData {
-  try {
-    const raw = localStorage.getItem(storageKey);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (parsed && Array.isArray(parsed.employees)) {
-        return parsed;
+export function useEmployeeData(sectionId: string) {
+  const { user } = useAuth();
+  const [data, setData] = useState<EmployeeData>({ employees: [] });
+  const [loading, setLoading] = useState(true);
+
+  // Load employees + their day entries from DB
+  const loadData = useCallback(async () => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      const { data: emps, error } = await supabase
+        .from('employees')
+        .select('id, name')
+        .eq('section_id', sectionId)
+        .order('created_at');
+
+      if (error) throw error;
+
+      const employees: Employee[] = [];
+      for (const emp of emps || []) {
+        const { data: entries } = await supabase
+          .from('day_entries')
+          .select('date_key, status, hours, location')
+          .eq('employee_id', emp.id);
+
+        const days: Record<string, DayEntry> = {};
+        for (const e of entries || []) {
+          days[e.date_key] = {
+            status: (e.status || '') as DayEntry['status'],
+            hours: Number(e.hours) || 0,
+            location: e.location || '',
+          };
+        }
+        employees.push({ id: emp.id, name: emp.name, days });
       }
+      setData({ employees });
+    } catch (err) {
+      console.error('Error loading employees:', err);
+    } finally {
+      setLoading(false);
     }
-  } catch {
-    try { localStorage.removeItem(storageKey); } catch {}
-  }
-  return { employees: [] };
-}
+  }, [user, sectionId]);
 
-export function forceSave(data: EmployeeData, storageKey: string) {
-  localStorage.setItem(storageKey, JSON.stringify(data));
-}
+  useEffect(() => { loadData(); }, [loadData]);
 
-export function useEmployeeData(storageKey: string) {
-  const [data, setData] = useState<EmployeeData>(() => loadData(storageKey));
+  const addEmployee = useCallback(async (name: string) => {
+    if (!user) return;
+    const { data: emp, error } = await supabase
+      .from('employees')
+      .insert({ name, section_id: sectionId, user_id: user.id })
+      .select('id, name')
+      .single();
 
-  // Reload data when storageKey changes (company switch)
-  useEffect(() => {
-    setData(loadData(storageKey));
-  }, [storageKey]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => forceSave(data, storageKey), 500);
-    return () => clearTimeout(timer);
-  }, [data, storageKey]);
-
-  const addEmployee = useCallback((name: string) => {
+    if (error) { console.error(error); return; }
     setData(prev => ({
-      employees: [
-        ...prev.employees,
-        { id: crypto.randomUUID(), name, days: {} },
-      ],
+      employees: [...prev.employees, { id: emp.id, name: emp.name, days: {} }],
     }));
+  }, [user, sectionId]);
+
+  const removeEmployee = useCallback(async (id: string) => {
+    const { error } = await supabase.from('employees').delete().eq('id', id);
+    if (error) { console.error(error); return; }
+    setData(prev => ({ employees: prev.employees.filter(e => e.id !== id) }));
   }, []);
 
-  const removeEmployee = useCallback((id: string) => {
-    setData(prev => ({
-      employees: prev.employees.filter(e => e.id !== id),
-    }));
-  }, []);
+  const updateDayEntry = useCallback(async (employeeId: string, dateKey: string, entry: DayEntry) => {
+    if (!user) return;
+    const { error } = await supabase
+      .from('day_entries')
+      .upsert({
+        employee_id: employeeId,
+        user_id: user.id,
+        date_key: dateKey,
+        status: entry.status,
+        hours: entry.hours,
+        location: entry.location || '',
+      }, { onConflict: 'employee_id,date_key' });
 
-  const updateDayEntry = useCallback((employeeId: string, dateKey: string, entry: DayEntry) => {
+    if (error) { console.error(error); return; }
     setData(prev => ({
       employees: prev.employees.map(e =>
         e.id === employeeId
@@ -56,7 +89,12 @@ export function useEmployeeData(storageKey: string) {
           : e
       ),
     }));
-  }, []);
+  }, [user]);
 
-  return { data, addEmployee, removeEmployee, updateDayEntry };
+  return { data, loading, addEmployee, removeEmployee, updateDayEntry };
+}
+
+// Keep for backward compat with PDF export save button
+export function forceSave() {
+  // No-op: data is now in the database
 }

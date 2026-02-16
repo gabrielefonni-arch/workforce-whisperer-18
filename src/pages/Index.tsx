@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { useEmployeeData, forceSave } from '@/hooks/useEmployeeData';
+import { useEmployeeData } from '@/hooks/useEmployeeData';
 import { useCompany } from '@/contexts/CompanyContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { WeekMonthNavigator } from '@/components/WeekMonthNavigator';
 import { EmployeeGrid } from '@/components/EmployeeGrid';
 import { MonthlyTotals } from '@/components/MonthlyTotals';
@@ -10,14 +11,15 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { exportToPDF } from '@/lib/pdfExport';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { UserPlus, Download, Trash2, Save } from 'lucide-react';
+import { UserPlus, Download, Trash2, LogOut } from 'lucide-react';
 import logoImg from '@/assets/logo.png';
 import { toast } from 'sonner';
 import { CompanySelector } from '@/components/CompanySelector';
 
 const Index = () => {
   const { currentCompany, currentSection } = useCompany();
-  const { data, addEmployee, removeEmployee, updateDayEntry } = useEmployeeData(currentCompany.storageKey);
+  const { signOut } = useAuth();
+  const { data, addEmployee, removeEmployee, updateDayEntry } = useEmployeeData(currentSection.id);
   const [newName, setNewName] = useState('');
   const [selectedYear, setSelectedYear] = useState(2026);
   const [selectedMonth, setSelectedMonth] = useState(2);
@@ -52,9 +54,9 @@ const Index = () => {
     toast.success('PDF scaricato con successo');
   };
 
-  const handleSave = () => {
-    forceSave(data, currentCompany.storageKey);
-    toast.success('Modifiche salvate con successo!');
+  const handleSignOut = async () => {
+    await signOut();
+    toast.success('Disconnesso');
   };
 
   const headerTitle = isAppointments ? 'Appuntamenti' : currentCompany.name;
@@ -62,7 +64,6 @@ const Index = () => {
 
   return (
     <div className={`min-h-screen bg-background ${currentSection.themeClass}`}>
-      {/* Header */}
       <header className="bg-primary text-primary-foreground sticky top-0 z-50 shadow-lg">
         <div className="max-w-[1600px] mx-auto px-3 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
@@ -72,18 +73,18 @@ const Index = () => {
               <p className="text-[10px] opacity-75 font-medium hidden sm:block">{headerSubtitle}</p>
             </div>
           </div>
-          {!isAppointments && (
-            <div className="flex gap-1.5">
-              <Button onClick={handleSave} variant="secondary" size="sm" className="gap-1 text-xs px-2.5">
-                <Save className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Salva</span>
-              </Button>
+          <div className="flex gap-1.5">
+            {!isAppointments && (
               <Button onClick={handleExport} variant="secondary" size="sm" className="gap-1 text-xs px-2.5">
                 <Download className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">PDF</span>
               </Button>
-            </div>
-          )}
+            )}
+            <Button onClick={handleSignOut} variant="secondary" size="sm" className="gap-1 text-xs px-2.5">
+              <LogOut className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Esci</span>
+            </Button>
+          </div>
         </div>
         <div className="max-w-[1600px] mx-auto px-3 pb-2 pt-1">
           <CompanySelector />
@@ -93,11 +94,10 @@ const Index = () => {
       <main className="max-w-[1600px] mx-auto px-3 py-4 space-y-4">
         {isAppointments ? (
           <ErrorBoundary>
-            <AppointmentsView storageKey={currentSection.storageKey} />
+            <AppointmentsView />
           </ErrorBoundary>
         ) : (
           <>
-            {/* Add employee */}
             <div className="flex gap-2 items-end">
               <div className="flex-1">
                 <label className="text-xs font-medium text-muted-foreground mb-1 block">Nuovo Dipendente</label>

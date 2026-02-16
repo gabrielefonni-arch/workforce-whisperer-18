@@ -18,12 +18,8 @@ const STATUS_CONFIG: Record<AppointmentStatus, { label: string; className: strin
 
 const ALL_STATUSES: AppointmentStatus[] = ['pending', 'done', 'cancelled', 'forgotten'];
 
-interface Props {
-  storageKey: string;
-}
-
-export function AppointmentsView({ storageKey }: Props) {
-  const { data, addAppointment, removeAppointment, updateStatus } = useAppointments(storageKey);
+export function AppointmentsView() {
+  const { data, addAppointment, removeAppointment, updateStatus } = useAppointments();
   const appointments = data.appointments ?? [];
   const { enabled: notifActive, toggleEnabled, isSupported: notifSupported } = useAppointmentNotifications(appointments);
   const [name, setName] = useState('');

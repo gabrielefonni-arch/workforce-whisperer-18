@@ -14,7 +14,104 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      appointments: {
+        Row: {
+          address: string
+          created_at: string
+          date: string
+          id: string
+          name: string
+          notes: string | null
+          status: string
+          time: string
+          user_id: string
+        }
+        Insert: {
+          address?: string
+          created_at?: string
+          date: string
+          id?: string
+          name: string
+          notes?: string | null
+          status?: string
+          time?: string
+          user_id: string
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          date?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          status?: string
+          time?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      day_entries: {
+        Row: {
+          date_key: string
+          employee_id: string
+          hours: number
+          id: string
+          location: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          date_key: string
+          employee_id: string
+          hours?: number
+          id?: string
+          location?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          date_key?: string
+          employee_id?: string
+          hours?: number
+          id?: string
+          location?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "day_entries_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employees: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          section_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          section_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          section_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
