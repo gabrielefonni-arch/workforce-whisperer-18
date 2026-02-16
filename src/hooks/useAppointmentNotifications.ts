@@ -31,13 +31,9 @@ async function registerPushSubscription(userId: string): Promise<boolean> {
   try {
     console.log('[Push] Starting registration for user:', userId);
     
-    // Register the push service worker
-    const registration = await navigator.serviceWorker.register('/sw-push.js', { scope: '/' });
-    console.log('[Push] SW registered, scope:', registration.scope);
-    
-    // Wait for SW to be ready
+    // Use the existing PWA service worker - do NOT register a separate one
     const ready = await navigator.serviceWorker.ready;
-    console.log('[Push] SW ready');
+    console.log('[Push] Using PWA service worker, scope:', ready.scope);
 
     const pushManager = (ready as any).pushManager;
     if (!pushManager) {

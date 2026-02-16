@@ -41,14 +41,25 @@ interface SectionContextValue {
 const SectionContext = createContext<SectionContextValue | null>(null);
 
 export function CompanyProvider({ children }: { children: ReactNode }) {
-  const [sectionId, setSectionId] = useState(SECTIONS[0].id);
+  const [sectionId, setSectionId] = useState(() => {
+    try {
+      return localStorage.getItem('current_section_id') || SECTIONS[0].id;
+    } catch {
+      return SECTIONS[0].id;
+    }
+  });
   const currentSection = SECTIONS.find(s => s.id === sectionId) || SECTIONS[0];
+
+  const setSection = (id: string) => {
+    setSectionId(id);
+    try { localStorage.setItem('current_section_id', id); } catch {}
+  };
 
   return (
     <SectionContext.Provider
       value={{
         currentSection,
-        setSection: setSectionId,
+        setSection,
         sections: SECTIONS,
       }}
     >
