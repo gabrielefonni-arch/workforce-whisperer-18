@@ -45,7 +45,7 @@ serve(async (req) => {
     // Generate VAPID keypair on-the-fly for signing
     // We need to use the stored private key with the matching public key
     const vapidPrivD = Deno.env.get('VAPID_PRIVATE_KEY')!;
-    const vapidPubB64 = 'BMKNloPM3hvPnuOcsdu3b2Wq2iH7H0yKaoe8h-BSjus7VNJFHrOWvVO_wFokWhWJRd_3cIR_kba62LltXyKAVg4';
+    const vapidPubB64 = 'BIGmW-borNBHSPuBg9s6zzf4Kbc5YmyUeMFB2VAMTmC4G2No39IB-FqQ2eJRCg0yN7vbDo6jNUqaQIHqxIg_UIk';
     const vapidPubRaw = b64urlToBytes(vapidPubB64);
 
     console.log(`[PUSH] VAPID privD length: ${vapidPrivD.length}, pubRaw length: ${vapidPubRaw.length}`);
