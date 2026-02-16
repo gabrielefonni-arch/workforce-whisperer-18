@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import type { Appointment } from '@/types/appointment';
 
 const NOTIF_ENABLED_KEY = 'appt_notifications_enabled';
-const VAPID_PUBLIC_KEY = 'BLugXb_kOMd_7gOnmvjjLY71jBpdxCY6kwLESMG86ws44Gwu6Gfj82nrYt1AIASmuSq1-7mOzFCocFCP4HAYSZg';
+const VAPID_PUBLIC_KEY = 'BD__ChpFvLAAqmk8bKI4ddqK5i-oTBGR1_2VtXdn3VlN2x6IDLi6S9DLQzdA1_EEIWABGvZBVzKPNvNt90qpkbY';
 
 function isNotificationSupported(): boolean {
   return 'Notification' in window && 'serviceWorker' in navigator;
