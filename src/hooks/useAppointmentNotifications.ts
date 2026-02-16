@@ -65,24 +65,28 @@ async function registerPushSubscription(userId: string): Promise<boolean> {
     const p256dh = toBase64Url(key);
     const authKey = toBase64Url(auth);
 
-    console.log('[Push] Saving subscription to DB...');
+    console.log('[Push] Saving subscription to DB for user:', userId);
     
     // Delete old subscriptions for this user first, then insert new
-    await supabase.from('push_subscriptions').delete().eq('user_id', userId);
+    const { error: delError } = await supabase.from('push_subscriptions').delete().eq('user_id', userId);
+    if (delError) {
+      console.error('[Push] Delete old subs error:', delError);
+      // Continue anyway - might not have old subs
+    }
     
-    const { error } = await supabase.from('push_subscriptions').insert({
+    const { data: insertData, error } = await supabase.from('push_subscriptions').insert({
       user_id: userId,
       endpoint: subscription.endpoint,
       p256dh: p256dh,
       auth: authKey,
-    });
+    }).select();
 
     if (error) {
-      console.error('[Push] DB save error:', error);
+      console.error('[Push] DB save error:', JSON.stringify(error));
       return false;
     }
 
-    console.log('[Push] Subscription saved successfully!');
+    console.log('[Push] Subscription saved successfully! ID:', insertData?.[0]?.id);
     return true;
   } catch (e) {
     console.error('[Push] Registration failed:', e);
