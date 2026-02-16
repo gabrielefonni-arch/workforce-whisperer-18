@@ -10,7 +10,7 @@ import { it } from 'date-fns/locale';
 
 const STATUS_CONFIG: Record<AppointmentStatus, { label: string; className: string }> = {
   pending: { label: 'In attesa', className: 'bg-info/15 text-info border-info/30' },
-  done: { label: 'Già fatto', className: 'bg-success/15 text-success border-success/30' },
+  done: { label: 'Effettuato', className: 'bg-success/15 text-success border-success/30' },
   cancelled: { label: 'Annullato', className: 'bg-destructive/15 text-destructive border-destructive/30' },
   forgotten: { label: 'Dimenticato', className: 'bg-warning/15 text-warning border-warning/30' },
 };
