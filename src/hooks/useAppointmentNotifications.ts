@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import type { Appointment } from '@/types/appointment';
 
 const NOTIF_ENABLED_KEY = 'appt_notifications_enabled';
-const VAPID_PUBLIC_KEY = 'BIGmW-borNBHSPuBg9s6zzf4Kbc5YmyUeMFB2VAMTmC4G2No39IB-FqQ2eJRCg0yN7vbDo6jNUqaQIHqxIg_UIk';
+const VAPID_PUBLIC_KEY = 'BKikAD3I25JP_ritxxK9QCdX5VCuyNQj_xnBzhSeH2dJ8arbXXISe2I2yEFR7DwONt9Ei8fMt0FNpCueV12V5nw';
 
 function isNotificationSupported(): boolean {
   return 'Notification' in window && 'serviceWorker' in navigator && 'PushManager' in window;
