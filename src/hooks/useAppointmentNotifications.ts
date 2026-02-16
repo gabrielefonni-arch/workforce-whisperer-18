@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 import type { Appointment } from '@/types/appointment';
 
 const NOTIF_ENABLED_KEY = 'appt_notifications_enabled';
@@ -105,31 +106,41 @@ export function useAppointmentNotifications(appointments: Appointment[]) {
   const notifiedIds = useRef<Set<string>>(new Set());
 
   const toggleEnabled = useCallback(async () => {
-    if (!isNotificationSupported()) return;
+    if (!isNotificationSupported()) {
+      toast.error('Notifiche push non supportate su questo browser');
+      return;
+    }
 
     if (!enabled) {
       if (Notification.permission === 'default') {
         const result = await Notification.requestPermission();
         setPermission(result);
-        if (result !== 'granted') return;
+        if (result !== 'granted') {
+          toast.error('Permesso notifiche negato');
+          return;
+        }
       } else if (Notification.permission === 'denied') {
+        toast.error('Notifiche bloccate. Attivale dalle impostazioni del browser');
         return;
       }
       
       if (user) {
         setRegistering(true);
+        toast.info('Registrazione notifiche push...');
         const success = await registerPushSubscription(user.id);
         setRegistering(false);
         if (!success) {
-          console.error('[Push] Registration failed, not enabling');
+          toast.error('Registrazione push fallita. Riprova.');
           return;
         }
+        toast.success('Notifiche push attivate!');
       }
       setEnabled(true);
       localStorage.setItem(NOTIF_ENABLED_KEY, 'true');
     } else {
       setEnabled(false);
       localStorage.setItem(NOTIF_ENABLED_KEY, 'false');
+      toast.info('Notifiche disattivate');
     }
   }, [enabled, user]);
 
