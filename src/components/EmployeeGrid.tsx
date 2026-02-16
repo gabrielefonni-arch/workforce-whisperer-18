@@ -35,7 +35,9 @@ export function EmployeeGrid({ employees, selectedYear, selectedMonth, selectedW
     : allDays;
 
   const getEntry = (emp: Employee, day: Date): DayEntry => {
-    return emp.days[dateKey(day)] || { status: '', hours: 0, location: '' };
+    const saved = emp.days[dateKey(day)];
+    if (saved) return saved;
+    return isWeekend(day) ? { status: 'holiday', hours: 0, location: '' } : { status: '', hours: 0, location: '' };
   };
 
   const updateField = (empId: string, day: Date, field: Partial<DayEntry>) => {
