@@ -31,7 +31,7 @@ export function useEmployeeData(storageKey: string) {
   useEffect(() => {
     const timer = setTimeout(() => forceSave(data, storageKey), 500);
     return () => clearTimeout(timer);
-  }, [data]);
+  }, [data, storageKey]);
 
   const addEmployee = useCallback((name: string) => {
     setData(prev => ({
