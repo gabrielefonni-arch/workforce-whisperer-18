@@ -151,34 +151,39 @@ export function useAppointmentNotifications(appointments: Appointment[]) {
     }
   }, [enabled, user]);
 
-  // Client-side fallback for when app is open
+  // Client-side fallback for when app is open (uses SW showNotification for iOS compatibility)
   useEffect(() => {
     if (!enabled || !isNotificationSupported() || Notification.permission !== 'granted') return;
 
-    const checkAppointments = () => {
+    const checkAppointments = async () => {
       const now = new Date();
-      appointments.forEach(appt => {
-        if (appt.status !== 'pending') return;
-        if (notifiedIds.current.has(appt.id)) return;
+      for (const appt of appointments) {
+        if (appt.status !== 'pending') continue;
+        if (notifiedIds.current.has(appt.id)) continue;
 
         const apptDateTime = new Date(`${appt.date}T${appt.time}:00`);
         if (now >= apptDateTime) {
           notifiedIds.current.add(appt.id);
           try {
-            new Notification('⏰ Appuntamento scaduto', {
+            // Use service worker showNotification — required on iOS
+            const reg = await navigator.serviceWorker.ready;
+            await reg.showNotification('⏰ Appuntamento scaduto', {
               body: `${appt.name} — ${appt.address} alle ${appt.time}`,
               icon: '/pwa-192x192.png',
+              badge: '/pwa-192x192.png',
               tag: `appt-${appt.id}`,
+              requireInteraction: true,
+              data: '/',
             });
-          } catch {
-            // SW will handle it via push
+          } catch (e) {
+            console.error('[Push] showNotification error:', e);
           }
         }
-      });
+      }
     };
 
     checkAppointments();
-    const interval = setInterval(checkAppointments, 30_000);
+    const interval = setInterval(checkAppointments, 15_000); // check every 15s
     return () => clearInterval(interval);
   }, [appointments, enabled]);
 
