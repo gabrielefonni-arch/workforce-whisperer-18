@@ -6,6 +6,7 @@ import { EmployeeGrid } from '@/components/EmployeeGrid';
 import { MonthlyTotals } from '@/components/MonthlyTotals';
 import { Legend } from '@/components/Legend';
 import { AppointmentsView } from '@/components/AppointmentsView';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { exportToPDF } from '@/lib/pdfExport';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -91,7 +92,9 @@ const Index = () => {
 
       <main className="max-w-[1600px] mx-auto px-3 py-4 space-y-4">
         {isAppointments ? (
-          <AppointmentsView storageKey={currentSection.storageKey} />
+          <ErrorBoundary>
+            <AppointmentsView storageKey={currentSection.storageKey} />
+          </ErrorBoundary>
         ) : (
           <>
             {/* Add employee */}
