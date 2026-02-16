@@ -20,8 +20,9 @@ export function exportToPDF(employees: Employee[], year: number, month: number, 
 
   let html = `<html><head><style>
     @page { size: A4 landscape; margin: 14mm 16mm; }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; font-size: 10px; color: #2d2d2d; background: #fff; }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+    body { font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; font-size: 10px; color: #2d2d2d; background: #fff; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    @media print { * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } }
 
     .header {
       display: flex; justify-content: space-between; align-items: center;
