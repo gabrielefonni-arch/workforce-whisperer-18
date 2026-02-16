@@ -3,7 +3,7 @@ import { getDaysInMonth, dateKey, MONTHS_IT, isWeekend } from './dateUtils';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 
-export function exportToPDF(employees: Employee[], year: number, month: number) {
+export function exportToPDF(employees: Employee[], year: number, month: number, companyName: string = 'Edilrestrutturazioni') {
   const days = getDaysInMonth(year, month);
 
   // Group days by week
@@ -82,7 +82,7 @@ export function exportToPDF(employees: Employee[], year: number, month: number) 
   // Header
   html += `<div class="header">
     <div>
-      <h1>Edilrestrutturazioni</h1>
+      <h1>${companyName}</h1>
       <div class="subtitle">Registro Presenze Dipendenti</div>
     </div>
     <div class="date-info">${MONTHS_IT[month]} ${year}<br/>Generato il ${format(new Date(), 'dd/MM/yyyy')}</div>
