@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAppointments } from '@/hooks/useAppointments';
+import { useAppointmentNotifications } from '@/hooks/useAppointmentNotifications';
 import type { AppointmentStatus } from '@/types/appointment';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,6 +24,8 @@ interface Props {
 
 export function AppointmentsView({ storageKey }: Props) {
   const { data, addAppointment, removeAppointment, updateStatus } = useAppointments(storageKey);
+  const appointments = data.appointments ?? [];
+  useAppointmentNotifications(appointments);
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
   const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
@@ -57,7 +60,6 @@ export function AppointmentsView({ storageKey }: Props) {
     }
   };
 
-  const appointments = data.appointments ?? [];
   const filtered = filterStatus === 'all'
     ? appointments
     : appointments.filter(a => a.status === filterStatus);
