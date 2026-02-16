@@ -18,7 +18,7 @@ export const SECTIONS: AppSection[] = [
   },
   {
     id: 'ditta2',
-    name: 'Edilristrutturazioni ditta 2',
+    name: 'Edilristrutturazioni e costruzioni',
     type: 'company',
     storageKey: 'edilristrutturazioni_ditta2_data',
     themeClass: 'theme-ditta2',
