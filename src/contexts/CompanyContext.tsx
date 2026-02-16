@@ -1,54 +1,71 @@
 import { createContext, useContext, useState, type ReactNode } from 'react';
 
-export interface Company {
+export interface AppSection {
   id: string;
   name: string;
+  type: 'company' | 'appointments';
   storageKey: string;
-  themeClass: string; // CSS class to apply on body
+  themeClass: string;
 }
 
-export const COMPANIES: Company[] = [
+export const SECTIONS: AppSection[] = [
   {
     id: 'edilristrutturazioni',
     name: 'Edilristrutturazioni',
+    type: 'company',
     storageKey: 'edilrestrutturazioni_data',
     themeClass: '',
   },
   {
     id: 'ditta2',
     name: 'Edilristrutturazioni ditta 2',
+    type: 'company',
     storageKey: 'edilristrutturazioni_ditta2_data',
     themeClass: 'theme-ditta2',
   },
+  {
+    id: 'appuntamenti',
+    name: 'Appuntamenti',
+    type: 'appointments',
+    storageKey: 'edilristrutturazioni_appuntamenti',
+    themeClass: 'theme-appuntamenti',
+  },
 ];
 
-interface CompanyContextValue {
-  currentCompany: Company;
-  setCompany: (id: string) => void;
-  companies: Company[];
+interface SectionContextValue {
+  currentSection: AppSection;
+  setSection: (id: string) => void;
+  sections: AppSection[];
 }
 
-const CompanyContext = createContext<CompanyContextValue | null>(null);
+const SectionContext = createContext<SectionContextValue | null>(null);
 
 export function CompanyProvider({ children }: { children: ReactNode }) {
-  const [companyId, setCompanyId] = useState(COMPANIES[0].id);
-  const currentCompany = COMPANIES.find(c => c.id === companyId) || COMPANIES[0];
+  const [sectionId, setSectionId] = useState(SECTIONS[0].id);
+  const currentSection = SECTIONS.find(s => s.id === sectionId) || SECTIONS[0];
 
   return (
-    <CompanyContext.Provider
+    <SectionContext.Provider
       value={{
-        currentCompany,
-        setCompany: setCompanyId,
-        companies: COMPANIES,
+        currentSection,
+        setSection: setSectionId,
+        sections: SECTIONS,
       }}
     >
       {children}
-    </CompanyContext.Provider>
+    </SectionContext.Provider>
   );
 }
 
 export function useCompany() {
-  const ctx = useContext(CompanyContext);
+  const ctx = useContext(SectionContext);
   if (!ctx) throw new Error('useCompany must be inside CompanyProvider');
-  return ctx;
+  return {
+    currentCompany: ctx.currentSection,
+    setCompany: ctx.setSection,
+    companies: ctx.sections,
+    currentSection: ctx.currentSection,
+    setSection: ctx.setSection,
+    sections: ctx.sections,
+  };
 }
