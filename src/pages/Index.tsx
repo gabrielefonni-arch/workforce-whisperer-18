@@ -56,11 +56,9 @@ const Index = () => {
       <header className="bg-primary text-primary-foreground sticky top-0 z-50 shadow-lg">
         <div className="max-w-[1600px] mx-auto px-3 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="bg-accent rounded-lg p-1">
-              <img src={logoImg} alt="Logo Edilrestrutturazioni" className="h-7 w-7 object-contain" />
-            </div>
+            <img src={logoImg} alt="Logo Edilristrutturazioni" className="h-8 w-8 object-contain" />
             <div className="min-w-0">
-              <h1 className="text-base font-extrabold tracking-tight leading-tight">Edilrestrutturazioni</h1>
+              <h1 className="text-base font-extrabold tracking-tight leading-tight">Edilristrutturazioni</h1>
               <p className="text-[10px] opacity-75 font-medium hidden sm:block">Gestione Dipendenti · Presenze</p>
             </div>
           </div>
