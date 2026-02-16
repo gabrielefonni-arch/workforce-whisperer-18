@@ -57,9 +57,10 @@ export function AppointmentsView({ storageKey }: Props) {
     }
   };
 
+  const appointments = data.appointments ?? [];
   const filtered = filterStatus === 'all'
-    ? data.appointments
-    : data.appointments.filter(a => a.status === filterStatus);
+    ? appointments
+    : appointments.filter(a => a.status === filterStatus);
 
   // Sort by date desc, then time
   const sorted = [...filtered].sort((a, b) => {
@@ -127,10 +128,10 @@ export function AppointmentsView({ storageKey }: Props) {
               : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
           }`}
         >
-          Tutti ({data.appointments.length})
+          Tutti ({appointments.length})
         </button>
         {ALL_STATUSES.map(s => {
-          const count = data.appointments.filter(a => a.status === s).length;
+          const count = appointments.filter(a => a.status === s).length;
           return (
             <button
               key={s}
