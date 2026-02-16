@@ -1,13 +1,62 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import type { Appointment } from '@/types/appointment';
 
 const NOTIF_ENABLED_KEY = 'appt_notifications_enabled';
+const VAPID_PUBLIC_KEY = 'BLugXb_kOMd_7gOnmvjjLY71jBpdxCY6kwLESMG86ws44Gwu6Gfj82nrYt1AIASmuSq1-7mOzFCocFCP4HAYSZg';
 
 function isNotificationSupported(): boolean {
-  return 'Notification' in window;
+  return 'Notification' in window && 'serviceWorker' in navigator;
+}
+
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
+  return outputArray;
+}
+
+async function registerPushSubscription(userId: string): Promise<PushSubscription | null> {
+  try {
+    const registration = await navigator.serviceWorker.register('/sw-push.js');
+    await navigator.serviceWorker.ready;
+
+    const mgr = (registration as any).pushManager;
+    if (!mgr) return null;
+
+    let subscription = await mgr.getSubscription();
+    if (!subscription) {
+      subscription = await mgr.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+      });
+    }
+
+    const key = subscription.getKey('p256dh');
+    const auth = subscription.getKey('auth');
+    if (!key || !auth) return null;
+
+    const p256dh = btoa(String.fromCharCode(...new Uint8Array(key))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    const authKey = btoa(String.fromCharCode(...new Uint8Array(auth))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+    // Upsert subscription
+    await supabase.from('push_subscriptions').upsert(
+      { user_id: userId, endpoint: subscription.endpoint, p256dh: p256dh, auth: authKey },
+      { onConflict: 'user_id,endpoint' }
+    );
+
+    return subscription;
+  } catch (e) {
+    console.error('Push registration failed:', e);
+    return null;
+  }
 }
 
 export function useAppointmentNotifications(appointments: Appointment[]) {
+  const { user } = useAuth();
   const [enabled, setEnabled] = useState(() => {
     try { return localStorage.getItem(NOTIF_ENABLED_KEY) !== 'false'; } catch { return true; }
   });
@@ -20,13 +69,16 @@ export function useAppointmentNotifications(appointments: Appointment[]) {
     if (!isNotificationSupported()) return;
 
     if (!enabled) {
-      // Turning on — request permission if needed
       if (Notification.permission === 'default') {
         const result = await Notification.requestPermission();
         setPermission(result);
         if (result !== 'granted') return;
       } else if (Notification.permission === 'denied') {
-        return; // Can't enable
+        return;
+      }
+      // Register push subscription for server-side notifications
+      if (user) {
+        await registerPushSubscription(user.id);
       }
       setEnabled(true);
       localStorage.setItem(NOTIF_ENABLED_KEY, 'true');
@@ -34,8 +86,16 @@ export function useAppointmentNotifications(appointments: Appointment[]) {
       setEnabled(false);
       localStorage.setItem(NOTIF_ENABLED_KEY, 'false');
     }
-  }, [enabled]);
+  }, [enabled, user]);
 
+  // Auto-register push on mount if already enabled
+  useEffect(() => {
+    if (enabled && user && isNotificationSupported() && Notification.permission === 'granted') {
+      registerPushSubscription(user.id);
+    }
+  }, [enabled, user]);
+
+  // Keep client-side fallback for when app is open
   useEffect(() => {
     if (!enabled || !isNotificationSupported() || Notification.permission !== 'granted') return;
 
@@ -55,13 +115,7 @@ export function useAppointmentNotifications(appointments: Appointment[]) {
               tag: `appt-${appt.id}`,
             });
           } catch {
-            navigator.serviceWorker?.ready?.then(reg => {
-              reg.showNotification('⏰ Appuntamento scaduto', {
-                body: `${appt.name} — ${appt.address} alle ${appt.time}`,
-                icon: '/pwa-192x192.png',
-                tag: `appt-${appt.id}`,
-              });
-            }).catch(() => {});
+            // SW will handle it via push
           }
         }
       });
