@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import type { Employee } from '@/types/employee';
 import { getDaysInMonth, dateKey } from '@/lib/dateUtils';
 import { MapPin } from 'lucide-react';
@@ -8,7 +9,7 @@ interface Props {
   month: number;
 }
 
-export function MonthlyTotals({ employees, year, month }: Props) {
+export const MonthlyTotals = memo(function MonthlyTotals({ employees, year, month }: Props) {
   const days = getDaysInMonth(year, month);
 
   if (employees.length === 0) return null;
@@ -83,4 +84,4 @@ export function MonthlyTotals({ employees, year, month }: Props) {
       })}
     </div>
   );
-}
+});
