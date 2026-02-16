@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo, memo } from 'react';
 import { useAppointments } from '@/hooks/useAppointments';
 import { useAppointmentNotifications } from '@/hooks/useAppointmentNotifications';
 import type { AppointmentStatus } from '@/types/appointment';
@@ -18,7 +18,7 @@ const STATUS_CONFIG: Record<AppointmentStatus, { label: string; className: strin
 
 const ALL_STATUSES: AppointmentStatus[] = ['pending', 'done', 'cancelled', 'forgotten'];
 
-export function AppointmentsView() {
+export const AppointmentsView = memo(function AppointmentsView() {
   const { data, addAppointment, removeAppointment, updateStatus } = useAppointments();
   const appointments = data.appointments ?? [];
   const { enabled: notifActive, toggleEnabled, isSupported: notifSupported, registering } = useAppointmentNotifications(appointments);
@@ -56,16 +56,16 @@ export function AppointmentsView() {
     }
   };
 
-  const filtered = filterStatus === 'all'
-    ? appointments
-    : appointments.filter(a => a.status === filterStatus);
-
-  // Sort by date desc, then time
-  const sorted = [...filtered].sort((a, b) => {
-    const cmp = b.date.localeCompare(a.date);
-    if (cmp !== 0) return cmp;
-    return b.time.localeCompare(a.time);
-  });
+  const sorted = useMemo(() => {
+    const filtered = filterStatus === 'all'
+      ? appointments
+      : appointments.filter(a => a.status === filterStatus);
+    return [...filtered].sort((a, b) => {
+      const cmp = b.date.localeCompare(a.date);
+      if (cmp !== 0) return cmp;
+      return b.time.localeCompare(a.time);
+    });
+  }, [appointments, filterStatus]);
 
   return (
     <div className="space-y-4">
@@ -237,4 +237,4 @@ export function AppointmentsView() {
       )}
     </div>
   );
-}
+});
