@@ -100,18 +100,15 @@ serve(async (req) => {
     console.log(`[PUSH] ${due.length} due of ${appts?.length || 0} pending`);
     if (!due.length) return new Response(JSON.stringify({ sent: 0 }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
+    // Send to ALL subscribed users, not just the appointment owner
     const { data: subs } = await supabase.from('push_subscriptions').select('*');
     console.log(`[PUSH] ${subs?.length || 0} subscriptions total`);
+    if (!subs?.length) return new Response(JSON.stringify({ sent: 0, due: due.length, reason: 'no subscriptions' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
     let sent = 0;
     const errors: string[] = [];
 
     for (const appt of due) {
-      const userSubs = (subs || []).filter(s => s.user_id === appt.user_id);
-      if (!userSubs.length) {
-        console.log(`[PUSH] No subs for user ${appt.user_id.substring(0, 8)}`);
-        continue;
-      }
 
       const payload = JSON.stringify({
         title: '⏰ Appuntamento scaduto',
