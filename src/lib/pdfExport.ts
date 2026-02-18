@@ -226,7 +226,7 @@ export function exportToPDF(
   </style></head><body>`;
 
   // ── HEADER ──────────────────────────────────────────────────────────
-  const initials = companyName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  const initials = companyName.split(' ').filter(w => w.length > 1).map(w => w[0]).join('').slice(0, 2).toUpperCase();
   html += `<div class="header">
     <div class="header-left">
       <div class="header-logo">${initials}</div>
