@@ -106,16 +106,16 @@ export function exportToPDF(
       padding:14px 20px; margin-bottom:16px;
       background:${b.headerGrad}; border-radius:10px; color:#fff;
     }
-    .header-left { display:flex; align-items:center; gap:14px; }
+    .header-left { display:flex; align-items:center; gap:14px; flex:1; min-width:0; }
     .header-logo {
-      width:44px; height:44px; border-radius:8px;
+      width:44px; height:44px; min-width:44px; border-radius:8px;
       background:rgba(255,255,255,0.15); display:flex; align-items:center;
       justify-content:center; font-size:20px; font-weight:900; color:#fff;
       letter-spacing:-1px; border:2px solid rgba(255,255,255,0.25);
     }
-    .header h1  { font-size:18px; font-weight:900; letter-spacing:0.3px; line-height:1.1; }
-    .header .sub { font-size:10px; opacity:0.7; font-weight:400; margin-top:2px; }
-    .header-right { text-align:right; font-size:10px; line-height:1.7; opacity:0.85; }
+    .header h1  { font-size:15px; font-weight:900; letter-spacing:0.3px; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:340px; }
+    .header .sub { font-size:9px; opacity:0.7; font-weight:400; margin-top:2px; }
+    .header-right { text-align:right; font-size:10px; line-height:1.7; opacity:0.85; flex-shrink:0; }
     .header-right strong { font-size:15px; font-weight:800; display:block; }
     .header-right small { font-size:9px; opacity:0.7; }
 
