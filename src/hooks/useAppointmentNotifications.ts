@@ -29,64 +29,52 @@ function toBase64Url(buffer: ArrayBuffer): string {
 
 async function registerPushSubscription(userId: string): Promise<boolean> {
   try {
-    console.log('[Push] Starting registration for user:', userId);
-    
-    // Use the existing PWA service worker - do NOT register a separate one
     const ready = await navigator.serviceWorker.ready;
-    console.log('[Push] Using PWA service worker, scope:', ready.scope);
-
     const pushManager = (ready as any).pushManager;
-    if (!pushManager) {
-      console.error('[Push] PushManager not available');
-      return false;
-    }
+    if (!pushManager) return false;
 
-    // Unsubscribe from any existing subscription (might be with old key)
+    // Check if subscription already exists and is still valid
     const existing = await pushManager.getSubscription();
     if (existing) {
-      console.log('[Push] Unsubscribing from old subscription');
+      // Check if it's already saved in DB for this user
+      const { data: saved } = await supabase
+        .from('push_subscriptions')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('endpoint', existing.endpoint)
+        .maybeSingle();
+
+      if (saved) {
+        console.log('[Push] Subscription already registered, skipping.');
+        return true;
+      }
+      // Endpoint changed or not in DB – unsubscribe and re-register
       await existing.unsubscribe();
     }
 
-    // Create new subscription with current VAPID key
     const subscription = await pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
     });
-    console.log('[Push] New subscription created:', subscription.endpoint.substring(0, 60));
 
     const key = subscription.getKey('p256dh');
     const auth = subscription.getKey('auth');
-    if (!key || !auth) {
-      console.error('[Push] Missing p256dh or auth keys');
-      return false;
-    }
+    if (!key || !auth) return false;
 
     const p256dh = toBase64Url(key);
     const authKey = toBase64Url(auth);
 
-    console.log('[Push] Saving subscription to DB for user:', userId);
-    
-    // Delete old subscriptions for this user first, then insert new
-    const { error: delError } = await supabase.from('push_subscriptions').delete().eq('user_id', userId);
-    if (delError) {
-      console.error('[Push] Delete old subs error:', delError);
-      // Continue anyway - might not have old subs
-    }
-    
-    const { data: insertData, error } = await supabase.from('push_subscriptions').insert({
+    // Upsert: delete old rows for user, insert new
+    await supabase.from('push_subscriptions').delete().eq('user_id', userId);
+    const { error } = await supabase.from('push_subscriptions').insert({
       user_id: userId,
       endpoint: subscription.endpoint,
-      p256dh: p256dh,
+      p256dh,
       auth: authKey,
-    }).select();
+    });
 
-    if (error) {
-      console.error('[Push] DB save error:', JSON.stringify(error));
-      return false;
-    }
-
-    console.log('[Push] Subscription saved successfully! ID:', insertData?.[0]?.id);
+    if (error) { console.error('[Push] DB save error:', error); return false; }
+    console.log('[Push] Subscription saved successfully.');
     return true;
   } catch (e) {
     console.error('[Push] Registration failed:', e);
@@ -104,6 +92,8 @@ export function useAppointmentNotifications(appointments: Appointment[]) {
   );
   const [registering, setRegistering] = useState(false);
   const notifiedIds = useRef<Set<string>>(new Set());
+  // Prevent duplicate auto-registrations
+  const autoRegistered = useRef(false);
 
   const toggleEnabled = useCallback(async () => {
     if (!isNotificationSupported()) {
@@ -123,7 +113,7 @@ export function useAppointmentNotifications(appointments: Appointment[]) {
         toast.error('Notifiche bloccate. Attivale dalle impostazioni del browser');
         return;
       }
-      
+
       if (user) {
         setRegistering(true);
         toast.info('Registrazione notifiche push...');
@@ -133,6 +123,7 @@ export function useAppointmentNotifications(appointments: Appointment[]) {
           toast.error('Registrazione push fallita. Riprova.');
           return;
         }
+        autoRegistered.current = true;
         toast.success('Notifiche push attivate!');
       }
       setEnabled(true);
@@ -144,14 +135,16 @@ export function useAppointmentNotifications(appointments: Appointment[]) {
     }
   }, [enabled, user]);
 
-  // Auto-register push on mount if already enabled
+  // Auto-register on mount ONLY ONCE per session if already enabled
   useEffect(() => {
+    if (autoRegistered.current) return;
     if (enabled && user && isNotificationSupported() && Notification.permission === 'granted') {
+      autoRegistered.current = true;
       registerPushSubscription(user.id);
     }
   }, [enabled, user]);
 
-  // Client-side fallback for when app is open (uses SW showNotification for iOS compatibility)
+  // Client-side notification check every 15s
   useEffect(() => {
     if (!enabled || !isNotificationSupported() || Notification.permission !== 'granted') return;
 
@@ -165,7 +158,6 @@ export function useAppointmentNotifications(appointments: Appointment[]) {
         if (now >= apptDateTime) {
           notifiedIds.current.add(appt.id);
           try {
-            // Use service worker showNotification — required on iOS
             const reg = await navigator.serviceWorker.ready;
             await reg.showNotification('⏰ Appuntamento scaduto', {
               body: `${appt.name} — ${appt.address} alle ${appt.time}`,
@@ -183,11 +175,10 @@ export function useAppointmentNotifications(appointments: Appointment[]) {
     };
 
     checkAppointments();
-    const interval = setInterval(checkAppointments, 15_000); // check every 15s
+    const interval = setInterval(checkAppointments, 15_000);
     return () => clearInterval(interval);
   }, [appointments, enabled]);
 
   const isActive = enabled && permission === 'granted';
-
   return { enabled: isActive, toggleEnabled, isSupported: isNotificationSupported(), permission, registering };
 }
