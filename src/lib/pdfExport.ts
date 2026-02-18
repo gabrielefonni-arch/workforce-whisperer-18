@@ -103,21 +103,26 @@ export function exportToPDF(
     /* ── HEADER ── */
     .header {
       display:flex; justify-content:space-between; align-items:center;
-      padding:14px 20px; margin-bottom:16px;
+      padding:0 20px; margin-bottom:16px;
       background:${b.headerGrad}; border-radius:10px; color:#fff;
+      height:68px; min-height:68px; max-height:68px; overflow:hidden;
     }
-    .header-left { display:flex; align-items:center; gap:14px; flex:1; min-width:0; }
+    .header-left { display:flex; align-items:center; gap:14px; flex:1; min-width:0; overflow:hidden; }
     .header-logo {
-      width:44px; height:44px; min-width:44px; border-radius:8px;
+      width:44px; height:44px; min-width:44px; max-width:44px; border-radius:8px;
       background:rgba(255,255,255,0.15); display:flex; align-items:center;
       justify-content:center; font-size:20px; font-weight:900; color:#fff;
-      letter-spacing:-1px; border:2px solid rgba(255,255,255,0.25);
+      letter-spacing:-1px; border:2px solid rgba(255,255,255,0.25); flex-shrink:0;
     }
-    .header h1  { font-size:15px; font-weight:900; letter-spacing:0.3px; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:340px; }
-    .header .sub { font-size:9px; opacity:0.7; font-weight:400; margin-top:2px; }
-    .header-right { text-align:right; font-size:10px; line-height:1.7; opacity:0.85; flex-shrink:0; }
-    .header-right strong { font-size:15px; font-weight:800; display:block; }
-    .header-right small { font-size:9px; opacity:0.7; }
+    .header-text { min-width:0; overflow:hidden; }
+    .header h1  { font-size:15px; font-weight:900; letter-spacing:0.3px; line-height:1.2;
+                  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin:0; }
+    .header .sub { font-size:9px; opacity:0.7; font-weight:400; margin-top:2px;
+                   white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .header-right { text-align:right; font-size:10px; line-height:1.6; opacity:0.85;
+                    flex-shrink:0; white-space:nowrap; }
+    .header-right strong { font-size:15px; font-weight:800; display:block; white-space:nowrap; }
+    .header-right small { font-size:9px; opacity:0.7; white-space:nowrap; }
 
     /* ── SECTION LABEL ── */
     .section-label {
@@ -225,7 +230,7 @@ export function exportToPDF(
   html += `<div class="header">
     <div class="header-left">
       <div class="header-logo">${initials}</div>
-      <div>
+      <div class="header-text">
         <h1>${companyName}</h1>
         <div class="sub">Registro Presenze Dipendenti</div>
       </div>
