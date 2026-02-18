@@ -1,10 +1,11 @@
-import { useState, memo, useCallback } from 'react';
+import { useState, memo, useCallback, useId } from 'react';
 import type { Employee, DayEntry, DayStatus } from '@/types/employee';
 import { getDaysInMonth, getWeeksInMonth, dateKey, isWeekend } from '@/lib/dateUtils';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { User, ChevronDown, ChevronUp, MapPin, Clock } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { useLocationHistory } from '@/hooks/useLocationHistory';
 
 interface Props {
   employees: Employee[];
@@ -22,26 +23,36 @@ const STATUSES: { value: DayStatus; label: string; short: string; style: string 
   { value: 'holiday', label: 'Festivo', short: 'F', style: 'bg-info/20 text-info border-info/50' },
 ];
 
-// Isolated location input – only saves on blur
+// Isolated location input – only saves on blur, with history datalist
 const LocationInput = memo(function LocationInput({
   initialValue,
   onSave,
+  history,
 }: {
   initialValue: string;
   onSave: (val: string) => void;
+  history: string[];
 }) {
   const [value, setValue] = useState(initialValue);
+  const listId = useId();
   return (
-    <Input
-      value={value}
-      onChange={e => setValue(e.target.value)}
-      onBlur={() => onSave(value)}
-      placeholder="Via / cantiere"
-      className="h-7 text-xs px-1.5"
-      autoComplete="off"
-      autoCorrect="off"
-      spellCheck={false}
-    />
+    <>
+      <datalist id={listId}>
+        {history.map(loc => (
+          <option key={loc} value={loc} />
+        ))}
+      </datalist>
+      <Input
+        list={listId}
+        value={value}
+        onChange={e => setValue(e.target.value)}
+        onBlur={() => onSave(value)}
+        placeholder="Via / cantiere"
+        className="h-7 text-xs px-1.5"
+        autoCorrect="off"
+        spellCheck={false}
+      />
+    </>
   );
 });
 
@@ -75,11 +86,11 @@ interface ExpandedDayProps {
   entry: DayEntry;
   empId: string;
   updateField: (empId: string, day: Date, field: Partial<DayEntry>) => void;
+  locationHistory: string[];
 }
 
-const ExpandedDay = memo(function ExpandedDay({ day, entry, empId, updateField }: ExpandedDayProps) {
+const ExpandedDay = memo(function ExpandedDay({ day, entry, empId, updateField, locationHistory }: ExpandedDayProps) {
   const weekend = isWeekend(day);
-  const statusInfo = STATUSES.find(s => s.value === entry.status) || STATUSES[0];
 
   const handleStatusClick = useCallback(
     (status: DayStatus) => updateField(empId, day, { status }),
@@ -132,6 +143,7 @@ const ExpandedDay = memo(function ExpandedDay({ day, entry, empId, updateField }
             key={`${empId}-${dateKey(day)}-l`}
             initialValue={entry.location || ''}
             onSave={handleLocationSave}
+            history={locationHistory}
           />
         </div>
       </div>
@@ -141,6 +153,7 @@ const ExpandedDay = memo(function ExpandedDay({ day, entry, empId, updateField }
 
 export function EmployeeGrid({ employees, selectedYear, selectedMonth, selectedWeekStart, onUpdateDay }: Props) {
   const [expandedEmp, setExpandedEmp] = useState<string | null>(null);
+  const { history: locationHistory, addLocation } = useLocationHistory();
   const allDays = getDaysInMonth(selectedYear, selectedMonth);
 
   const visibleDays = selectedWeekStart
@@ -164,9 +177,10 @@ export function EmployeeGrid({ employees, selectedYear, selectedMonth, selectedW
     (empId: string, day: Date, field: Partial<DayEntry>) => {
       const emp = employees.find(e => e.id === empId);
       const current = emp ? getEntry(emp, day) : { status: '' as DayStatus, hours: 0, location: '' };
+      if (field.location) addLocation(field.location);
       onUpdateDay(empId, dateKey(day), { ...current, ...field });
     },
-    [employees, getEntry, onUpdateDay],
+    [employees, getEntry, onUpdateDay, addLocation],
   );
 
   const cycleStatus = useCallback(
@@ -252,6 +266,7 @@ export function EmployeeGrid({ employees, selectedYear, selectedMonth, selectedW
                     entry={getEntry(emp, day)}
                     empId={emp.id}
                     updateField={updateField}
+                    locationHistory={locationHistory}
                   />
                 ))}
               </div>
