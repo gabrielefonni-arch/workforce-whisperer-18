@@ -3,166 +3,367 @@ import { getDaysInMonth, dateKey, MONTHS_IT, isWeekend } from './dateUtils';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 
-export function exportToPDF(employees: Employee[], year: number, month: number, companyName: string = 'Edilrestrutturazioni') {
-  const days = getDaysInMonth(year, month);
+// Brand palettes per azienda
+const BRANDS: Record<string, {
+  primary: string; primaryDark: string; primaryLight: string;
+  accent: string; accentLight: string;
+  headerGrad: string; tableHeadGrad: string;
+  nameBorder: string; totalBg: string; totalColor: string;
+  summaryAccent: string;
+}> = {
+  'edilristrutturazioni': {
+    primary:       '#b45309',
+    primaryDark:   '#92400e',
+    primaryLight:  '#fef3c7',
+    accent:        '#d97706',
+    accentLight:   '#fffbeb',
+    headerGrad:    'linear-gradient(135deg, #1c0a00 0%, #451a03 50%, #78350f 100%)',
+    tableHeadGrad: 'linear-gradient(135deg, #451a03, #78350f)',
+    nameBorder:    '#b45309',
+    totalBg:       '#fef3c7',
+    totalColor:    '#92400e',
+    summaryAccent: '#b45309',
+  },
+  'ditta2': {
+    primary:       '#1d4ed8',
+    primaryDark:   '#1e3a8a',
+    primaryLight:  '#dbeafe',
+    accent:        '#0ea5e9',
+    accentLight:   '#f0f9ff',
+    headerGrad:    'linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #1d4ed8 100%)',
+    tableHeadGrad: 'linear-gradient(135deg, #1e3a8a, #1d4ed8)',
+    nameBorder:    '#1d4ed8',
+    totalBg:       '#dbeafe',
+    totalColor:    '#1e3a8a',
+    summaryAccent: '#1d4ed8',
+  },
+};
 
-  // Group days by week
-  const weeks: Date[][] = [];
-  let currentWeek: Date[] = [];
-  days.forEach((d, i) => {
-    currentWeek.push(d);
-    const dayOfWeek = d.getDay();
-    if (dayOfWeek === 0 || i === days.length - 1) {
-      weeks.push(currentWeek);
-      currentWeek = [];
-    }
+function getBrand(companyId: string) {
+  return BRANDS[companyId] || BRANDS['edilristrutturazioni'];
+}
+
+export function exportToPDF(
+  employees: Employee[],
+  year: number,
+  month: number,
+  companyName: string = 'Edilristrutturazioni',
+  companyId: string = 'edilristrutturazioni'
+) {
+  const days = getDaysInMonth(year, month);
+  const b = getBrand(companyId);
+  const totalWorkDays = days.filter(d => !isWeekend(d)).length;
+
+  // ── Pre-compute stats ──────────────────────────────────────────────
+  type EmpStats = {
+    totalHours: number; presentDays: number; injuryDays: number;
+    sickDays: number; holidayDays: number; absenceDays: number;
+    locations: [string, number][];
+  };
+  const stats: Record<string, EmpStats> = {};
+  employees.forEach(emp => {
+    let totalHours = 0, presentDays = 0, injuryDays = 0, sickDays = 0, holidayDays = 0;
+    const locationCount: Record<string, number> = {};
+    days.forEach(d => {
+      const entry = emp.days[dateKey(d)];
+      if (!entry) return;
+      totalHours += entry.hours;
+      if (entry.status === 'present')  presentDays++;
+      if (entry.status === 'injury')   injuryDays++;
+      if (entry.status === 'sick')     sickDays++;
+      if (entry.status === 'holiday')  holidayDays++;
+      if (entry.location?.trim()) {
+        const loc = entry.location.trim();
+        locationCount[loc] = (locationCount[loc] || 0) + 1;
+      }
+    });
+    const absenceDays = totalWorkDays - presentDays - injuryDays - sickDays - holidayDays;
+    stats[emp.id] = {
+      totalHours, presentDays, injuryDays, sickDays, holidayDays,
+      absenceDays: Math.max(0, absenceDays),
+      locations: Object.entries(locationCount).sort((a, b) => b[1] - a[1]),
+    };
   });
 
-  let html = `<html><head><style>
-    @page { size: A4 landscape; margin: 14mm 16mm; }
-    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
-    body { font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; font-size: 10px; color: #2d2d2d; background: #fff; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-    @media print { * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } }
+  // ── Totals row ─────────────────────────────────────────────────────
+  const grandTotalHours = employees.reduce((s, e) => s + stats[e.id].totalHours, 0);
 
+  // ── HTML ───────────────────────────────────────────────────────────
+  let html = `<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8">
+  <title>Presenze ${companyName} – ${MONTHS_IT[month]} ${year}</title>
+  <style>
+    @page { size: A4 landscape; margin: 10mm 12mm; }
+    *  { box-sizing: border-box; margin:0; padding:0;
+         -webkit-print-color-adjust:exact!important;
+         print-color-adjust:exact!important; color-adjust:exact!important; }
+    body { font-family:'Segoe UI',Arial,sans-serif; font-size:9px;
+           color:#1a1a1a; background:#fff; }
+    @media print { * { -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important; } }
+
+    /* ── HEADER ── */
     .header {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 16px 20px; margin-bottom: 20px;
-      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-      border-radius: 10px; color: #fff;
+      display:flex; justify-content:space-between; align-items:center;
+      padding:14px 20px; margin-bottom:16px;
+      background:${b.headerGrad}; border-radius:10px; color:#fff;
     }
-    .header h1 { font-size: 20px; font-weight: 800; letter-spacing: 0.5px; margin-bottom: 2px; }
-    .header .subtitle { font-size: 11px; opacity: 0.7; font-weight: 400; letter-spacing: 0.3px; }
-    .header .date-info { 
-      font-size: 11px; text-align: right; opacity: 0.85; line-height: 1.6;
+    .header-left { display:flex; align-items:center; gap:14px; }
+    .header-logo {
+      width:44px; height:44px; border-radius:8px;
+      background:rgba(255,255,255,0.15); display:flex; align-items:center;
+      justify-content:center; font-size:20px; font-weight:900; color:#fff;
+      letter-spacing:-1px; border:2px solid rgba(255,255,255,0.25);
     }
-    .header .date-info strong { font-size: 14px; font-weight: 700; display: block; }
+    .header h1  { font-size:18px; font-weight:900; letter-spacing:0.3px; line-height:1.1; }
+    .header .sub { font-size:10px; opacity:0.7; font-weight:400; margin-top:2px; }
+    .header-right { text-align:right; font-size:10px; line-height:1.7; opacity:0.85; }
+    .header-right strong { font-size:15px; font-weight:800; display:block; }
+    .header-right small { font-size:9px; opacity:0.7; }
 
-    table { border-collapse: separate; border-spacing: 0; width: 100%; margin-bottom: 22px; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 8px rgba(0,0,0,0.06); }
-    thead tr { background: linear-gradient(135deg, #1a1a2e, #0f3460); }
-    th {
-      color: #fff; font-weight: 600; font-size: 8.5px; padding: 8px 4px;
-      text-align: center; text-transform: uppercase; letter-spacing: 0.5px; border: none;
+    /* ── SECTION LABEL ── */
+    .section-label {
+      font-size:10px; font-weight:700; text-transform:uppercase;
+      letter-spacing:0.8px; color:${b.primary}; margin-bottom:6px;
+      padding-left:2px; border-left:3px solid ${b.accent}; padding-left:8px;
     }
-    th.name-col { text-align: left; padding-left: 14px; min-width: 130px; font-size: 9px; }
-    th.total-col { background: rgba(255,255,255,0.1); }
+
+    /* ── MAIN TABLE ── */
+    table { border-collapse:collapse; width:100%; margin-bottom:18px;
+            border-radius:8px; overflow:hidden;
+            box-shadow:0 2px 10px rgba(0,0,0,0.08); }
+    thead tr { background:${b.tableHeadGrad}; }
+    th {
+      color:#fff; font-weight:700; font-size:7.5px; padding:7px 3px;
+      text-align:center; text-transform:uppercase; letter-spacing:0.4px;
+    }
+    th.col-name   { text-align:left; padding-left:12px; min-width:110px; font-size:8.5px; }
+    th.col-total  { background:rgba(255,255,255,0.18); min-width:46px; }
+    th.col-we     { background:rgba(0,0,0,0.15); }
 
     td {
-      border: 1px solid #f0eeeb; padding: 5px 3px; text-align: center;
-      font-size: 9px; vertical-align: middle; transition: background 0.2s;
+      border-bottom:1px solid #f0eeea; border-right:1px solid #f5f3f0;
+      padding:4px 2px; text-align:center; font-size:8.5px; vertical-align:middle;
     }
-    td.name-cell {
-      text-align: left; padding-left: 14px; font-weight: 700; font-size: 10.5px;
-      background: #f8f9fc; border-left: 4px solid #0f3460; color: #1a1a2e;
+    td.col-name {
+      text-align:left; padding-left:12px; font-weight:700; font-size:10px;
+      background:#fafafa; border-left:4px solid ${b.nameBorder}; color:#111;
+      white-space:nowrap;
     }
-    td.total-cell { font-weight: 800; font-size: 12px; background: #eef2ff; color: #0f3460; }
-
-    .weekend { background: #f5f5f7; color: #aaa; }
-    .present { background: #e8f8ef; color: #1b7a43; }
-    .injury { background: #fff8e1; color: #b8860b; }
-    .sick { background: #fef0f0; color: #c0392b; }
-    .holiday { background: #e8f0fe; color: #2563eb; }
-
-    .hours { font-weight: 700; font-size: 11px; display: block; color: inherit; }
-    .location { font-size: 7px; color: #999; display: block; max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .status-badge { font-size: 7.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; }
-
-    .day-header { font-size: 7.5px; display: block; font-weight: 400; opacity: 0.65; text-transform: uppercase; }
-    .day-num { font-size: 11px; display: block; font-weight: 700; }
-
-    tbody tr:nth-child(even) td:not(.name-cell):not(.total-cell) { background-color: rgba(0,0,0,0.012); }
-    tbody tr:hover td { background-color: rgba(15,52,96,0.04) !important; }
-
-    .summary { margin-top: 16px; }
-    .summary h2 {
-      font-size: 14px; font-weight: 800; color: #1a1a2e; margin-bottom: 12px;
-      padding-bottom: 6px; border-bottom: 3px solid #0f3460; display: inline-block;
+    td.col-total {
+      font-weight:900; font-size:12px; background:${b.totalBg}; color:${b.totalColor};
+      border-left:1px solid rgba(0,0,0,0.08);
     }
-    .summary-grid { display: flex; flex-wrap: wrap; gap: 12px; }
+    td.col-we     { background:#f7f7f7; color:#bbb; }
+
+    /* status colours */
+    td.s-present  { background:#ecfdf5; }
+    td.s-injury   { background:#fffbeb; }
+    td.s-sick     { background:#fff1f2; }
+    td.s-holiday  { background:#eff6ff; }
+
+    .cell-hrs  { font-weight:800; font-size:10px; display:block; line-height:1.2; }
+    .cell-hrs.present { color:#15803d; }
+    .cell-hrs.injury  { color:#b45309; }
+    .cell-hrs.sick    { color:#be123c; }
+    .cell-hrs.holiday { color:#1d4ed8; }
+    .cell-loc  { font-size:6.5px; color:#888; display:block; white-space:nowrap;
+                 overflow:hidden; text-overflow:ellipsis; max-width:54px; }
+    .cell-badge { font-size:7px; font-weight:800; text-transform:uppercase;
+                  letter-spacing:0.4px; padding:1px 3px; border-radius:3px; display:inline-block; }
+    .badge-injury  { background:#fef3c7; color:#92400e; }
+    .badge-sick    { background:#ffe4e6; color:#9f1239; }
+    .badge-holiday { background:#dbeafe; color:#1e40af; }
+
+    /* grand-total row */
+    tr.grand-total td {
+      background:${b.totalBg}; color:${b.totalColor}; font-weight:800;
+      font-size:9px; border-top:2px solid ${b.primary};
+    }
+    tr.grand-total td.col-name { font-size:9.5px; color:${b.primaryDark}; }
+    tr.grand-total td.col-total { font-size:13px; }
+
+    /* zebra */
+    tbody tr:nth-child(even) td:not(.col-name):not(.col-total) { background-color:rgba(0,0,0,0.009); }
+
+    /* ── SUMMARY ── */
+    .summary-title {
+      font-size:13px; font-weight:900; color:${b.primaryDark}; margin-bottom:10px;
+      padding-bottom:5px; border-bottom:3px solid ${b.primary}; display:inline-block;
+    }
+    .summary-grid { display:flex; flex-wrap:wrap; gap:10px; }
     .summary-card {
-      border: 1px solid #e8e8ee; border-radius: 10px; padding: 12px 16px;
-      min-width: 210px; flex: 1; background: linear-gradient(135deg, #f8f9fc 0%, #fff 100%);
-      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+      border:1px solid #e8e8ee; border-radius:10px; padding:10px 14px;
+      min-width:200px; flex:1;
+      background:linear-gradient(135deg, #fafafa 0%, #fff 100%);
+      box-shadow:0 1px 5px rgba(0,0,0,0.05);
+      border-top:3px solid ${b.summaryAccent};
     }
-    .summary-card h3 { font-size: 12px; font-weight: 700; margin-bottom: 6px; color: #1a1a2e; }
-    .summary-card .stat { display: inline-block; margin-right: 14px; font-size: 10px; color: #555; }
-    .summary-card .stat strong { font-size: 15px; color: #0f3460; display: block; line-height: 1.2; }
-    .summary-card .locations { margin-top: 6px; font-size: 9px; color: #888; }
+    .s-card-name { font-size:11px; font-weight:800; margin-bottom:7px; color:#111; }
+    .s-card-stats { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:6px; }
+    .s-stat { text-align:center; }
+    .s-stat-val {
+      font-size:16px; font-weight:900; color:${b.primary}; display:block; line-height:1;
+    }
+    .s-stat-val.v-present  { color:#15803d; }
+    .s-stat-val.v-injury   { color:#b45309; }
+    .s-stat-val.v-sick     { color:#be123c; }
+    .s-stat-val.v-holiday  { color:#1d4ed8; }
+    .s-stat-val.v-absence  { color:#6b7280; }
+    .s-stat-lbl { font-size:8px; color:#888; text-transform:uppercase; letter-spacing:0.4px; }
+    .s-divider  { height:1px; background:#f0f0f0; margin:6px 0; }
+    .s-locs     { font-size:8px; color:#666; line-height:1.6; }
+    .s-locs strong { color:${b.primary}; font-weight:700; }
+
+    /* ── FOOTER ── */
+    .footer {
+      margin-top:16px; text-align:center; font-size:8px; color:#bbb;
+      border-top:1px solid #f0f0f0; padding-top:8px;
+    }
   </style></head><body>`;
 
-  // Header
+  // ── HEADER ──────────────────────────────────────────────────────────
+  const initials = companyName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
   html += `<div class="header">
-    <div>
-      <h1>${companyName}</h1>
-      <div class="subtitle">Registro Presenze Dipendenti</div>
+    <div class="header-left">
+      <div class="header-logo">${initials}</div>
+      <div>
+        <h1>${companyName}</h1>
+        <div class="sub">Registro Presenze Dipendenti</div>
+      </div>
     </div>
-    <div class="date-info">${MONTHS_IT[month]} ${year}<br/>Generato il ${format(new Date(), 'dd/MM/yyyy')}</div>
+    <div class="header-right">
+      <strong>${MONTHS_IT[month]} ${year}</strong>
+      Giorni lavorativi: ${totalWorkDays} &nbsp;|&nbsp; Dipendenti: ${employees.length}<br/>
+      <small>Generato il ${format(new Date(), "dd MMMM yyyy 'alle' HH:mm", { locale: it })}</small>
+    </div>
   </div>`;
 
-  // Main attendance table
-  html += `<table><thead><tr><th class="name-col">Dipendente</th>`;
+  // ── MAIN TABLE ───────────────────────────────────────────────────────
+  html += `<div class="section-label">Dettaglio Presenze Giornaliere</div>`;
+  html += `<table><thead><tr>`;
+  html += `<th class="col-name">Dipendente</th>`;
+
   days.forEach(d => {
-    const we = isWeekend(d) ? ' class="weekend"' : '';
-    html += `<th${we}><span class="day-header">${format(d, 'EEE', { locale: it }).slice(0, 2)}</span><span class="day-num">${format(d, 'd')}</span></th>`;
+    const we = isWeekend(d);
+    const dayName = format(d, 'EEE', { locale: it }).slice(0, 2);
+    const dayNum  = format(d, 'd');
+    html += `<th${we ? ' class="col-we"' : ''}><span style="display:block;font-size:6.5px;opacity:0.7;text-transform:uppercase">${dayName}</span><span style="font-size:11px;font-weight:800">${dayNum}</span></th>`;
   });
-  html += `<th class="total-col">Tot. Ore</th></tr></thead><tbody>`;
+  html += `<th class="col-total">TOT.<br/>ORE</th></tr></thead><tbody>`;
 
   employees.forEach(emp => {
-    html += `<tr><td class="name-cell">${emp.name}</td>`;
-    let total = 0;
+    const s = stats[emp.id];
+    html += `<tr><td class="col-name">${emp.name}</td>`;
     days.forEach(d => {
       const key = dateKey(d);
       const entry = emp.days[key];
       const we = isWeekend(d);
-      let cls = '';
-      let statusLabel = '';
-      if (entry?.status === 'present') { cls = 'present'; }
-      else if (entry?.status === 'injury') { cls = 'injury'; statusLabel = 'INF'; }
-      else if (entry?.status === 'sick') { cls = 'sick'; statusLabel = 'MAL'; }
-      else if (entry?.status === 'holiday') { cls = 'holiday'; statusLabel = 'FES'; }
-      else if (we) { cls = 'weekend'; }
 
-      const hoursStr = entry?.hours ? `<span class="hours">${entry.hours}</span>` : '';
-      const locStr = entry?.location ? `<span class="location" title="${entry.location}">${entry.location}</span>` : '';
-      const badgeStr = statusLabel && !entry?.hours ? `<span class="status-badge">${statusLabel}</span>` : '';
-      
-      html += `<td class="${cls}">${hoursStr}${badgeStr}${locStr}</td>`;
-      total += entry?.hours || 0;
+      if (!entry && we) { html += `<td class="col-we"></td>`; return; }
+      if (!entry)       { html += `<td></td>`; return; }
+
+      const st = entry.status;
+      let tdClass = '';
+      if (st === 'present') tdClass = 's-present';
+      else if (st === 'injury') tdClass = 's-injury';
+      else if (st === 'sick') tdClass = 's-sick';
+      else if (st === 'holiday') tdClass = 's-holiday';
+      else if (we) tdClass = 'col-we';
+
+      let inner = '';
+      if (entry.hours) {
+        inner += `<span class="cell-hrs ${st}">${entry.hours}</span>`;
+      }
+      if (st === 'injury' && !entry.hours)  inner += `<span class="cell-badge badge-injury">INF</span>`;
+      if (st === 'sick' && !entry.hours)    inner += `<span class="cell-badge badge-sick">MAL</span>`;
+      if (st === 'holiday' && !entry.hours) inner += `<span class="cell-badge badge-holiday">FES</span>`;
+      if (entry.location)                   inner += `<span class="cell-loc" title="${entry.location}">${entry.location}</span>`;
+
+      html += `<td class="${tdClass}">${inner}</td>`;
     });
-    html += `<td class="total-cell">${total}</td></tr>`;
+    html += `<td class="col-total">${s.totalHours}</td></tr>`;
   });
+
+  // Grand total row
+  const dayTotals = days.map(d => {
+    return employees.reduce((sum, emp) => sum + (emp.days[dateKey(d)]?.hours || 0), 0);
+  });
+  html += `<tr class="grand-total"><td class="col-name">↳ TOTALE COMPLESSIVO</td>`;
+  dayTotals.forEach((t, i) => {
+    const we = isWeekend(days[i]);
+    html += `<td${we ? ' class="col-we"' : ''}>${t > 0 ? t : ''}</td>`;
+  });
+  html += `<td class="col-total">${grandTotalHours}</td></tr>`;
+
   html += `</tbody></table>`;
 
-  // Summary section
-  html += `<div class="summary"><h2>Riepilogo</h2><div class="summary-grid">`;
+  // ── SUMMARY ──────────────────────────────────────────────────────────
+  html += `<div><span class="summary-title">Riepilogo Mensile per Dipendente</span></div>`;
+  html += `<div class="summary-grid">`;
+
   employees.forEach(emp => {
-    let totalHours = 0, presentDays = 0, injuryDays = 0, sickDays = 0;
-    const locationCount: Record<string, number> = {};
-    days.forEach(d => {
-      const entry = emp.days[dateKey(d)];
-      if (entry) {
-        totalHours += entry.hours;
-        if (entry.status === 'present') presentDays++;
-        if (entry.status === 'injury') injuryDays++;
-        if (entry.status === 'sick') sickDays++;
-        if (entry.location?.trim()) {
-          const loc = entry.location.trim();
-          locationCount[loc] = (locationCount[loc] || 0) + 1;
-        }
-      }
-    });
-    const locs = Object.entries(locationCount).sort((a, b) => b[1] - a[1]);
+    const s = stats[emp.id];
+    const avgHoursPerDay = s.presentDays > 0 ? (s.totalHours / s.presentDays).toFixed(1) : '–';
+
     html += `<div class="summary-card">
-      <h3>${emp.name}</h3>
-      <div>
-        <span class="stat"><strong>${totalHours}</strong> ore</span>
-        <span class="stat"><strong>${presentDays}</strong> pres.</span>
-        <span class="stat"><strong>${injuryDays}</strong> infor.</span>
-        <span class="stat"><strong>${sickDays}</strong> mal.</span>
+      <div class="s-card-name">${emp.name}</div>
+      <div class="s-card-stats">
+        <div class="s-stat">
+          <span class="s-stat-val">${s.totalHours}</span>
+          <span class="s-stat-lbl">Ore Tot.</span>
+        </div>
+        <div class="s-stat">
+          <span class="s-stat-val v-present">${s.presentDays}</span>
+          <span class="s-stat-lbl">Presenze</span>
+        </div>
+        <div class="s-stat">
+          <span class="s-stat-val v-injury">${s.injuryDays}</span>
+          <span class="s-stat-lbl">Infortuni</span>
+        </div>
+        <div class="s-stat">
+          <span class="s-stat-val v-sick">${s.sickDays}</span>
+          <span class="s-stat-lbl">Malattia</span>
+        </div>
+        <div class="s-stat">
+          <span class="s-stat-val v-holiday">${s.holidayDays}</span>
+          <span class="s-stat-lbl">Festività</span>
+        </div>
+        <div class="s-stat">
+          <span class="s-stat-val v-absence">${s.absenceDays}</span>
+          <span class="s-stat-lbl">Assenze</span>
+        </div>
+        <div class="s-stat">
+          <span class="s-stat-val" style="font-size:13px">${avgHoursPerDay}</span>
+          <span class="s-stat-lbl">Ore/Giorno</span>
+        </div>
       </div>
-      ${locs.length > 0 ? `<div class="locations">📍 ${locs.map(([l, c]) => `${l} (${c}g)`).join(' · ')}</div>` : ''}
+      ${s.locations.length > 0 ? `<div class="s-divider"></div>
+      <div class="s-locs">📍 ${s.locations.map(([loc, cnt]) => `<strong>${loc}</strong> (${cnt}g)`).join(' &nbsp;·&nbsp; ')}</div>` : ''}
     </div>`;
   });
-  html += `</div></div>`;
+
+  // Grand summary card
+  const totalPresent  = employees.reduce((s, e) => s + stats[e.id].presentDays, 0);
+  const totalInjury   = employees.reduce((s, e) => s + stats[e.id].injuryDays, 0);
+  const totalSick     = employees.reduce((s, e) => s + stats[e.id].sickDays, 0);
+  const totalHoliday  = employees.reduce((s, e) => s + stats[e.id].holidayDays, 0);
+  const totalAbsence  = employees.reduce((s, e) => s + stats[e.id].absenceDays, 0);
+
+  html += `<div class="summary-card" style="border-top-color:${b.primaryDark};background:linear-gradient(135deg,${b.primaryLight},#fff);">
+    <div class="s-card-name" style="color:${b.primaryDark};font-size:12px">📊 RIEPILOGO GENERALE – ${employees.length} DIPENDENTI</div>
+    <div class="s-card-stats">
+      <div class="s-stat"><span class="s-stat-val" style="font-size:20px">${grandTotalHours}</span><span class="s-stat-lbl">Ore Totali</span></div>
+      <div class="s-stat"><span class="s-stat-val v-present">${totalPresent}</span><span class="s-stat-lbl">Presenze</span></div>
+      <div class="s-stat"><span class="s-stat-val v-injury">${totalInjury}</span><span class="s-stat-lbl">Infortuni</span></div>
+      <div class="s-stat"><span class="s-stat-val v-sick">${totalSick}</span><span class="s-stat-lbl">Malattia</span></div>
+      <div class="s-stat"><span class="s-stat-val v-holiday">${totalHoliday}</span><span class="s-stat-lbl">Festività</span></div>
+      <div class="s-stat"><span class="s-stat-val v-absence">${totalAbsence}</span><span class="s-stat-lbl">Assenze</span></div>
+    </div>
+  </div>`;
+
+  html += `</div>`; // summary-grid
+
+  // ── FOOTER ───────────────────────────────────────────────────────────
+  html += `<div class="footer">${companyName} &nbsp;·&nbsp; ${MONTHS_IT[month]} ${year} &nbsp;·&nbsp; Documento riservato – generato automaticamente il ${format(new Date(), 'dd/MM/yyyy HH:mm')}</div>`;
 
   html += `</body></html>`;
 
@@ -170,6 +371,6 @@ export function exportToPDF(employees: Employee[], year: number, month: number, 
   if (win) {
     win.document.write(html);
     win.document.close();
-    setTimeout(() => win.print(), 400);
+    setTimeout(() => win.print(), 500);
   }
 }

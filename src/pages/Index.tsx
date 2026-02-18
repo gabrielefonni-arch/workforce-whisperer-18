@@ -51,7 +51,7 @@ const Index = () => {
       toast.error('Nessun dipendente da esportare');
       return;
     }
-    exportToPDF(data.employees, selectedYear, selectedMonth, currentCompany.name);
+    exportToPDF(data.employees, selectedYear, selectedMonth, currentCompany.name, currentCompany.id);
     toast.success('PDF scaricato con successo');
   };
 
