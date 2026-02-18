@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, memo, useCallback } from 'react';
 import type { Employee, DayEntry, DayStatus } from '@/types/employee';
 import { getDaysInMonth, getWeeksInMonth, dateKey, isWeekend } from '@/lib/dateUtils';
 import { format } from 'date-fns';
@@ -22,6 +22,123 @@ const STATUSES: { value: DayStatus; label: string; short: string; style: string 
   { value: 'holiday', label: 'Festivo', short: 'F', style: 'bg-info/20 text-info border-info/50' },
 ];
 
+// Isolated location input – only saves on blur
+const LocationInput = memo(function LocationInput({
+  initialValue,
+  onSave,
+}: {
+  initialValue: string;
+  onSave: (val: string) => void;
+}) {
+  const [value, setValue] = useState(initialValue);
+  return (
+    <Input
+      value={value}
+      onChange={e => setValue(e.target.value)}
+      onBlur={() => onSave(value)}
+      placeholder="Via / cantiere"
+      className="h-7 text-xs px-1.5"
+      autoComplete="off"
+      autoCorrect="off"
+      spellCheck={false}
+    />
+  );
+});
+
+// Isolated hours input – only saves on blur
+const HoursInput = memo(function HoursInput({
+  initialValue,
+  onSave,
+}: {
+  initialValue: number;
+  onSave: (val: number) => void;
+}) {
+  const [value, setValue] = useState(initialValue === 0 ? '' : String(initialValue));
+  return (
+    <Input
+      type="number"
+      inputMode="decimal"
+      min={0}
+      max={24}
+      value={value}
+      onChange={e => setValue(e.target.value)}
+      onBlur={() => onSave(parseFloat(value) || 0)}
+      placeholder="Ore"
+      className="h-7 text-xs px-1.5 text-center font-mono"
+      autoComplete="off"
+    />
+  );
+});
+
+interface ExpandedDayProps {
+  day: Date;
+  entry: DayEntry;
+  empId: string;
+  updateField: (empId: string, day: Date, field: Partial<DayEntry>) => void;
+}
+
+const ExpandedDay = memo(function ExpandedDay({ day, entry, empId, updateField }: ExpandedDayProps) {
+  const weekend = isWeekend(day);
+  const statusInfo = STATUSES.find(s => s.value === entry.status) || STATUSES[0];
+
+  const handleStatusClick = useCallback(
+    (status: DayStatus) => updateField(empId, day, { status }),
+    [empId, day, updateField],
+  );
+  const handleLocationSave = useCallback(
+    (location: string) => updateField(empId, day, { location }),
+    [empId, day, updateField],
+  );
+  const handleHoursSave = useCallback(
+    (hours: number) => updateField(empId, day, { hours }),
+    [empId, day, updateField],
+  );
+
+  return (
+    <div className={`px-3 py-2 space-y-1.5 ${weekend && !entry.status ? 'bg-muted/40' : ''}`}>
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold min-w-[70px]">
+          {format(day, 'EEE d MMM', { locale: it })}
+        </span>
+        <div className="flex gap-1">
+          {STATUSES.filter(s => s.value !== '').map(s => (
+            <button
+              key={s.value}
+              onClick={() => handleStatusClick(s.value)}
+              className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border transition-all ${
+                entry.status === s.value
+                  ? s.style + ' ring-1 ring-offset-1'
+                  : 'bg-muted/50 text-muted-foreground border-transparent hover:bg-muted'
+              }`}
+            >
+              {s.short}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex gap-2">
+        <div className="flex items-center gap-1 w-20 shrink-0">
+          <Clock className="h-3 w-3 text-muted-foreground shrink-0" />
+          <HoursInput
+            key={`${empId}-${dateKey(day)}-h`}
+            initialValue={entry.hours}
+            onSave={handleHoursSave}
+          />
+        </div>
+        <div className="flex items-center gap-1 flex-1">
+          <MapPin className="h-3 w-3 text-muted-foreground shrink-0" />
+          <LocationInput
+            key={`${empId}-${dateKey(day)}-l`}
+            initialValue={entry.location || ''}
+            onSave={handleLocationSave}
+          />
+        </div>
+      </div>
+    </div>
+  );
+});
+
 export function EmployeeGrid({ employees, selectedYear, selectedMonth, selectedWeekStart, onUpdateDay }: Props) {
   const [expandedEmp, setExpandedEmp] = useState<string | null>(null);
   const allDays = getDaysInMonth(selectedYear, selectedMonth);
@@ -34,25 +151,34 @@ export function EmployeeGrid({ employees, selectedYear, selectedMonth, selectedW
       })
     : allDays;
 
-  const getEntry = (emp: Employee, day: Date): DayEntry => {
-    const saved = emp.days[dateKey(day)];
-    if (saved) return saved;
-    return isWeekend(day) ? { status: 'holiday', hours: 0, location: '' } : { status: '', hours: 0, location: '' };
-  };
+  const getEntry = useCallback(
+    (emp: Employee, day: Date): DayEntry => {
+      const saved = emp.days[dateKey(day)];
+      if (saved) return saved;
+      return isWeekend(day) ? { status: 'holiday', hours: 0, location: '' } : { status: '', hours: 0, location: '' };
+    },
+    [],
+  );
 
-  const updateField = (empId: string, day: Date, field: Partial<DayEntry>) => {
-    const emp = employees.find(e => e.id === empId);
-    const current = emp ? getEntry(emp, day) : { status: '' as DayStatus, hours: 0, location: '' };
-    onUpdateDay(empId, dateKey(day), { ...current, ...field });
-  };
+  const updateField = useCallback(
+    (empId: string, day: Date, field: Partial<DayEntry>) => {
+      const emp = employees.find(e => e.id === empId);
+      const current = emp ? getEntry(emp, day) : { status: '' as DayStatus, hours: 0, location: '' };
+      onUpdateDay(empId, dateKey(day), { ...current, ...field });
+    },
+    [employees, getEntry, onUpdateDay],
+  );
 
-  const cycleStatus = (empId: string, day: Date) => {
-    const emp = employees.find(e => e.id === empId);
-    const current = emp ? getEntry(emp, day) : { status: '' as DayStatus, hours: 0, location: '' };
-    const idx = STATUSES.findIndex(s => s.value === current.status);
-    const next = STATUSES[(idx + 1) % STATUSES.length];
-    onUpdateDay(empId, dateKey(day), { ...current, status: next.value });
-  };
+  const cycleStatus = useCallback(
+    (empId: string, day: Date) => {
+      const emp = employees.find(e => e.id === empId);
+      const current = emp ? getEntry(emp, day) : { status: '' as DayStatus, hours: 0, location: '' };
+      const idx = STATUSES.findIndex(s => s.value === current.status);
+      const next = STATUSES[(idx + 1) % STATUSES.length];
+      onUpdateDay(empId, dateKey(day), { ...current, status: next.value });
+    },
+    [employees, getEntry, onUpdateDay],
+  );
 
   if (employees.length === 0) {
     return (
@@ -72,7 +198,6 @@ export function EmployeeGrid({ employees, selectedYear, selectedMonth, selectedW
 
         return (
           <div key={emp.id} className="bg-card rounded-lg border shadow-sm overflow-hidden">
-            {/* Employee header – tap to expand */}
             <button
               onClick={() => setExpandedEmp(isExpanded ? null : emp.id)}
               className="w-full px-3 py-2.5 flex items-center justify-between bg-secondary/50 border-b hover:bg-secondary/70 transition-colors"
@@ -84,7 +209,6 @@ export function EmployeeGrid({ employees, selectedYear, selectedMonth, selectedW
               {isExpanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
             </button>
 
-            {/* Compact view: day pills */}
             {!isExpanded && (
               <div className="grid grid-cols-7 gap-px p-1.5">
                 {visibleDays.map(day => {
@@ -119,68 +243,17 @@ export function EmployeeGrid({ employees, selectedYear, selectedMonth, selectedW
               </div>
             )}
 
-            {/* Expanded view: full day-by-day editing */}
             {isExpanded && (
               <div className="divide-y">
-                {visibleDays.map(day => {
-                  const entry = getEntry(emp, day);
-                  const weekend = isWeekend(day);
-                  const statusInfo = STATUSES.find(s => s.value === entry.status) || STATUSES[0];
-
-                  return (
-                    <div
-                      key={dateKey(day)}
-                      className={`px-3 py-2 space-y-1.5 ${weekend && !entry.status ? 'bg-muted/40' : ''}`}
-                    >
-                      {/* Day label + status buttons */}
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold min-w-[70px]">
-                          {format(day, 'EEE d MMM', { locale: it })}
-                        </span>
-                        <div className="flex gap-1">
-                          {STATUSES.filter(s => s.value !== '').map(s => (
-                            <button
-                              key={s.value}
-                              onClick={() => updateField(emp.id, day, { status: s.value })}
-                              className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border transition-all ${
-                                entry.status === s.value
-                                  ? s.style + ' ring-1 ring-offset-1'
-                                  : 'bg-muted/50 text-muted-foreground border-transparent hover:bg-muted'
-                              }`}
-                            >
-                              {s.short}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Hours + Location inputs */}
-                      <div className="flex gap-2">
-                        <div className="flex items-center gap-1 w-20 shrink-0">
-                          <Clock className="h-3 w-3 text-muted-foreground shrink-0" />
-                          <Input
-                            type="number"
-                            min={0}
-                            max={24}
-                            value={entry.hours || ''}
-                            onChange={e => updateField(emp.id, day, { hours: parseFloat(e.target.value) || 0 })}
-                            placeholder="Ore"
-                            className="h-7 text-xs px-1.5 text-center font-mono"
-                          />
-                        </div>
-                        <div className="flex items-center gap-1 flex-1">
-                          <MapPin className="h-3 w-3 text-muted-foreground shrink-0" />
-                          <Input
-                            value={entry.location || ''}
-                            onChange={e => updateField(emp.id, day, { location: e.target.value })}
-                            placeholder="Via / cantiere"
-                            className="h-7 text-xs px-1.5"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+                {visibleDays.map(day => (
+                  <ExpandedDay
+                    key={dateKey(day)}
+                    day={day}
+                    entry={getEntry(emp, day)}
+                    empId={emp.id}
+                    updateField={updateField}
+                  />
+                ))}
               </div>
             )}
           </div>
