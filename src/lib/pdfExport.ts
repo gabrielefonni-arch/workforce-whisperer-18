@@ -3,6 +3,13 @@ import { getDaysInMonth, dateKey, MONTHS_IT, isWeekend } from './dateUtils';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 
+function escapeHtml(text: string): string {
+  const map: Record<string, string> = {
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  };
+  return String(text).replace(/[&<>"']/g, (c) => map[c]);
+}
+
 // Brand palettes per azienda
 const BRANDS: Record<string, {
   primary: string; primaryDark: string; primaryLight: string;
@@ -90,7 +97,7 @@ export function exportToPDF(
 
   // ── HTML ───────────────────────────────────────────────────────────
   let html = `<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8">
-  <title>Presenze ${companyName} – ${MONTHS_IT[month]} ${year}</title>
+  <title>Presenze ${escapeHtml(companyName)} – ${MONTHS_IT[month]} ${year}</title>
   <style>
     @page { size: A4 landscape; margin: 10mm 12mm; }
     *  { box-sizing: border-box; margin:0; padding:0;
@@ -231,7 +238,7 @@ export function exportToPDF(
     <div class="header-left">
       <div class="header-logo">${initials}</div>
       <div class="header-text">
-        <h1>${companyName}</h1>
+        <h1>${escapeHtml(companyName)}</h1>
         <div class="sub">Registro Presenze Dipendenti</div>
       </div>
     </div>
@@ -257,7 +264,7 @@ export function exportToPDF(
 
   employees.forEach(emp => {
     const s = stats[emp.id];
-    html += `<tr><td class="col-name">${emp.name}</td>`;
+    html += `<tr><td class="col-name">${escapeHtml(emp.name)}</td>`;
     days.forEach(d => {
       const key = dateKey(d);
       const entry = emp.days[key];
@@ -281,7 +288,7 @@ export function exportToPDF(
       if (st === 'injury' && !entry.hours)  inner += `<span class="cell-badge badge-injury">INF</span>`;
       if (st === 'sick' && !entry.hours)    inner += `<span class="cell-badge badge-sick">MAL</span>`;
       if (st === 'holiday' && !entry.hours) inner += `<span class="cell-badge badge-holiday">FES</span>`;
-      if (entry.location)                   inner += `<span class="cell-loc" title="${entry.location}">${entry.location}</span>`;
+      if (entry.location)                   inner += `<span class="cell-loc" title="${escapeHtml(entry.location)}">${escapeHtml(entry.location)}</span>`;
 
       html += `<td class="${tdClass}">${inner}</td>`;
     });
@@ -310,7 +317,7 @@ export function exportToPDF(
     const avgHoursPerDay = s.presentDays > 0 ? (s.totalHours / s.presentDays).toFixed(1) : '–';
 
     html += `<div class="summary-card">
-      <div class="s-card-name">${emp.name}</div>
+      <div class="s-card-name">${escapeHtml(emp.name)}</div>
       <div class="s-card-stats">
         <div class="s-stat">
           <span class="s-stat-val">${s.totalHours}</span>
@@ -342,7 +349,7 @@ export function exportToPDF(
         </div>
       </div>
       ${s.locations.length > 0 ? `<div class="s-divider"></div>
-      <div class="s-locs">📍 ${s.locations.map(([loc, cnt]) => `<strong>${loc}</strong> (${cnt}g)`).join(' &nbsp;·&nbsp; ')}</div>` : ''}
+      <div class="s-locs">📍 ${s.locations.map(([loc, cnt]) => `<strong>${escapeHtml(loc)}</strong> (${cnt}g)`).join(' &nbsp;·&nbsp; ')}</div>` : ''}
     </div>`;
   });
 
@@ -368,7 +375,7 @@ export function exportToPDF(
   html += `</div>`; // summary-grid
 
   // ── FOOTER ───────────────────────────────────────────────────────────
-  html += `<div class="footer">${companyName} &nbsp;·&nbsp; ${MONTHS_IT[month]} ${year} &nbsp;·&nbsp; Documento riservato – generato automaticamente il ${format(new Date(), 'dd/MM/yyyy HH:mm')}</div>`;
+  html += `<div class="footer">${escapeHtml(companyName)} &nbsp;·&nbsp; ${MONTHS_IT[month]} ${year} &nbsp;·&nbsp; Documento riservato – generato automaticamente il ${format(new Date(), 'dd/MM/yyyy HH:mm')}</div>`;
 
   html += `</body></html>`;
 
