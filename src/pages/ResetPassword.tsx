@@ -14,11 +14,20 @@ export default function ResetPassword() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check for recovery token in URL hash
+    // Listen for the PASSWORD_RECOVERY event from Supabase Auth
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setReady(true);
+      }
+    });
+
+    // Also check URL hash as fallback (for direct link access)
     const hash = window.location.hash;
-    if (hash.includes('type=recovery')) {
+    if (hash.includes('type=recovery') || hash.includes('access_token')) {
       setReady(true);
     }
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const handleReset = async (e: React.FormEvent) => {
