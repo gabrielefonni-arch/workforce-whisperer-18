@@ -93,11 +93,11 @@ const ExpandedDay = memo(function ExpandedDay({ day, entry, empId, updateField, 
   const weekend = isWeekend(day);
 
   const handleStatusClick = useCallback(
-    (status: DayStatus) => updateField(empId, day, {
-      status,
-      ...(status === 'present' ? { hours: 8 } : {}),
-    }),
-    [empId, day, updateField],
+    (status: DayStatus) => {
+      const hours = status !== '' ? (entry.hours > 0 ? entry.hours : 8) : entry.hours;
+      updateField(empId, day, { status, hours });
+    },
+    [empId, day, entry.hours, updateField],
   );
   const handleLocationSave = useCallback(
     (location: string) => updateField(empId, day, { location }),
@@ -192,8 +192,8 @@ export function EmployeeGrid({ employees, selectedYear, selectedMonth, selectedW
       const current = emp ? getEntry(emp, day) : { status: '' as DayStatus, hours: 0, location: '' };
       const idx = STATUSES.findIndex(s => s.value === current.status);
       const next = STATUSES[(idx + 1) % STATUSES.length];
-      const extraFields = next.value === 'present' ? { hours: 8 } : {};
-      onUpdateDay(empId, dateKey(day), { ...current, status: next.value, ...extraFields });
+      const hours = next.value !== '' ? (current.hours > 0 ? current.hours : 8) : current.hours;
+      onUpdateDay(empId, dateKey(day), { ...current, status: next.value, hours });
     },
     [employees, getEntry, onUpdateDay],
   );
