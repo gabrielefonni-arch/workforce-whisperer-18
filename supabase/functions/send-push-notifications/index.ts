@@ -42,9 +42,13 @@ serve(async (req) => {
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    // Generate VAPID keypair on-the-fly for signing
-    // We need to use the stored private key with the matching public key
-    const vapidPrivD = 'V5_r9M97iybLwUTt2QZpQWatJcgmYHSxrMxeWmW-CXc';
+    // Load VAPID keys from environment secrets
+    const vapidPrivD = Deno.env.get('VAPID_PRIVATE_KEY');
+    if (!vapidPrivD) {
+      return new Response(JSON.stringify({ error: 'VAPID_PRIVATE_KEY secret not configured' }), {
+        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
     const vapidPubB64 = 'BFT3MqUGIWn-3Fyu0U1LsRvOIVrWEciw1-iglkhjasksvJiE0aBAE2LVj-N5DnwHSX1rkdNcCghI-ovn2FvDsB0';
     const vapidPubRaw = b64urlToBytes(vapidPubB64);
 
