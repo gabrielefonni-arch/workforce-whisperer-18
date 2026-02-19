@@ -135,7 +135,7 @@ const ExpandedDay = memo(function ExpandedDay({ day, entry, empId, updateField, 
         <div className="flex items-center gap-1 w-20 shrink-0">
           <Clock className="h-3 w-3 text-muted-foreground shrink-0" />
           <HoursInput
-            key={`${empId}-${dateKey(day)}-h`}
+            key={`${empId}-${dateKey(day)}-h-${entry.hours}`}
             initialValue={entry.hours}
             onSave={handleHoursSave}
           />
