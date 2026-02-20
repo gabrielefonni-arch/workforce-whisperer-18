@@ -270,7 +270,7 @@ export function exportToPDF(
       const entry = emp.days[key];
       const we = isWeekend(d);
 
-      if (!entry && we) { html += `<td class="col-we"></td>`; return; }
+      if (!entry && we) { html += `<td class="col-we s-holiday"><span class="cell-badge badge-holiday">FES</span></td>`; return; }
       if (!entry)       { html += `<td></td>`; return; }
 
       const st = entry.status;
