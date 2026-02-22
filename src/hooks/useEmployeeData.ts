@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import type { EmployeeData, DayEntry, Employee } from '@/types/employee';
+import { employeeSchema, dayEntrySchema } from '@/lib/validation';
 
 export function useEmployeeData(sectionId: string) {
   const { user } = useAuth();
@@ -75,9 +76,14 @@ export function useEmployeeData(sectionId: string) {
 
   const addEmployee = useCallback(async (name: string) => {
     if (!user) return;
+    const result = employeeSchema.safeParse({ name });
+    if (!result.success) {
+      toast.error(result.error.errors.map(e => e.message).join(', '));
+      return;
+    }
     const { data: emp, error } = await supabase
       .from('employees')
-      .insert({ name, section_id: sectionId, user_id: user.id })
+      .insert({ name: result.data.name, section_id: sectionId, user_id: user.id })
       .select('id, name')
       .single();
 
@@ -104,6 +110,12 @@ export function useEmployeeData(sectionId: string) {
   const updateDayEntry = useCallback(async (employeeId: string, dateKey: string, entry: DayEntry) => {
     if (!user) return;
 
+    const result = dayEntrySchema.safeParse({ ...entry, date_key: dateKey });
+    if (!result.success) {
+      toast.error(result.error.errors.map(e => e.message).join(', '));
+      return;
+    }
+
     // Optimistic update – instant UI response
     setData(prev => ({
       employees: prev.employees.map(e =>
@@ -118,10 +130,10 @@ export function useEmployeeData(sectionId: string) {
       .upsert({
         employee_id: employeeId,
         user_id: user.id,
-        date_key: dateKey,
-        status: entry.status,
-        hours: entry.hours,
-        location: entry.location || '',
+        date_key: result.data.date_key,
+        status: result.data.status,
+        hours: result.data.hours,
+        location: result.data.location || '',
       }, { onConflict: 'employee_id,date_key' });
 
     if (error) {
