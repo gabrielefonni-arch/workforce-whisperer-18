@@ -102,7 +102,7 @@ Deno.serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "onboarding@resend.dev",
+        from: "noreply@edilristrutturazioni.com",
         to: email,
         subject: "Reimposta la tua password - Edilristrutturazioni",
         html: `
