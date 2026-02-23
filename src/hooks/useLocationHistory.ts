@@ -1,37 +1,39 @@
 import { useState, useCallback } from 'react';
 
-const STORAGE_KEY = 'location-history';
 const MAX_ENTRIES = 30;
 
-function loadHistory(): string[] {
+function getStorageKey(sectionId: string) {
+  return `location-history-${sectionId}`;
+}
+
+function loadHistory(sectionId: string): string[] {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(getStorageKey(sectionId));
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
   }
 }
 
-function saveHistory(history: string[]) {
+function saveHistory(sectionId: string, history: string[]) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+    localStorage.setItem(getStorageKey(sectionId), JSON.stringify(history));
   } catch {}
 }
 
-export function useLocationHistory() {
-  const [history, setHistory] = useState<string[]>(loadHistory);
+export function useLocationHistory(sectionId: string) {
+  const [history, setHistory] = useState<string[]>(() => loadHistory(sectionId));
 
   const addLocation = useCallback((location: string) => {
     const trimmed = location.trim();
     if (!trimmed) return;
     setHistory(prev => {
-      // Move to front if already exists, otherwise add
       const filtered = prev.filter(l => l.toLowerCase() !== trimmed.toLowerCase());
       const next = [trimmed, ...filtered].slice(0, MAX_ENTRIES);
-      saveHistory(next);
+      saveHistory(sectionId, next);
       return next;
     });
-  }, []);
+  }, [sectionId]);
 
   return { history, addLocation };
 }

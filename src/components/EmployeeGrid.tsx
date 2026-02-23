@@ -12,6 +12,7 @@ interface Props {
   selectedYear: number;
   selectedMonth: number;
   selectedWeekStart: Date | null;
+  sectionId: string;
   onUpdateDay: (employeeId: string, dateKey: string, entry: DayEntry) => void;
 }
 
@@ -154,9 +155,9 @@ const ExpandedDay = memo(function ExpandedDay({ day, entry, empId, updateField, 
   );
 });
 
-export function EmployeeGrid({ employees, selectedYear, selectedMonth, selectedWeekStart, onUpdateDay }: Props) {
+export function EmployeeGrid({ employees, selectedYear, selectedMonth, selectedWeekStart, sectionId, onUpdateDay }: Props) {
   const [expandedEmp, setExpandedEmp] = useState<string | null>(null);
-  const { history: locationHistory, addLocation } = useLocationHistory();
+  const { history: locationHistory, addLocation } = useLocationHistory(sectionId);
   const allDays = getDaysInMonth(selectedYear, selectedMonth);
 
   const visibleDays = selectedWeekStart
