@@ -24,10 +24,10 @@ export default function Auth() {
     if (mode === 'forgot') {
       setLoading(true);
       try {
-        const res = await supabase.functions.invoke('send-reset-email', {
-          body: { email },
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/reset-password`,
         });
-        if (res.error) throw res.error;
+        if (error) throw error;
         toast.success('Email di recupero inviata! Controlla la tua casella.');
       } catch (err: any) {
         toast.error(err.message || 'Errore nell\'invio');
