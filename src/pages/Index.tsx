@@ -152,6 +152,7 @@ const Index = () => {
               selectedYear={selectedYear}
               selectedMonth={selectedMonth}
               selectedWeekStart={selectedWeekStart}
+              sectionId={currentSection.id}
               onUpdateDay={updateDayEntry}
             />
 
