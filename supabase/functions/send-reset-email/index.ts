@@ -66,65 +66,46 @@ Deno.serve(async (req) => {
     }
     const email = parseResult.data;
 
-    const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-    if (!RESEND_API_KEY) {
-      throw new Error("RESEND_API_KEY not configured");
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+    const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY");
+
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+      throw new Error("Backend env not configured");
     }
 
-    // Generate recovery link using admin API
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
-
-    const { data, error: linkError } =
-      await supabaseAdmin.auth.admin.generateLink({
-        type: "recovery",
-        email,
-      });
-
-    if (linkError || !data) {
-      // Don't reveal if user exists or not
-      return new Response(JSON.stringify({ success: true }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    // Derive the public origin safely (needed for redirectTo)
+    const originHeader = req.headers.get("origin");
+    const referer = req.headers.get("referer");
+    let origin = originHeader;
+    if (!origin && referer) {
+      try {
+        origin = new URL(referer).origin;
+      } catch {
+        // ignore
+      }
     }
 
-    // Build the redirect URL with the token hash
-    const redirectUrl = `${req.headers.get("origin") || Deno.env.get("SUPABASE_URL")}/reset-password`;
-    const confirmUrl = `${Deno.env.get("SUPABASE_URL")}/auth/v1/verify?token=${data.properties.hashed_token}&type=recovery&redirect_to=${encodeURIComponent(redirectUrl)}`;
+    // Fallback for local/dev or missing headers
+    origin ??= "http://localhost:5173";
 
-    // Send email via Resend
-    const resendRes = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-        "Content-Type": "application/json",
+    const redirectTo = `${origin}/reset-password`;
+
+    // Use the platform's built-in password recovery email sending (no external provider required)
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
       },
-      body: JSON.stringify({
-        from: "noreply@edilristrutturazioni.com",
-        to: email,
-        subject: "Reimposta la tua password - Edilristrutturazioni",
-        html: `
-          <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 16px;">
-            <h2 style="color: #1a1a1a; margin-bottom: 16px;">Reimposta la tua password</h2>
-            <p style="color: #555; line-height: 1.6;">Hai richiesto di reimpostare la password del tuo account Edilristrutturazioni.</p>
-            <p style="color: #555; line-height: 1.6;">Clicca il pulsante qui sotto per impostare una nuova password:</p>
-            <a href="${confirmUrl}" 
-               style="display: inline-block; background: #2563eb; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; margin: 16px 0;">
-              Reimposta Password
-            </a>
-            <p style="color: #999; font-size: 13px; margin-top: 24px;">Se non hai richiesto tu questa operazione, ignora questa email.</p>
-            <p style="color: #999; font-size: 13px;">Il link scade tra 24 ore.</p>
-          </div>
-        `,
-      }),
     });
 
-    if (!resendRes.ok) {
-      const resendError = await resendRes.text();
-      console.error("Resend error:", resendError);
-      throw new Error("Failed to send email");
+    const { error: recoverError } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo,
+    });
+
+    // Don't reveal details (avoid account enumeration); log only for debugging
+    if (recoverError) {
+      console.error("resetPasswordForEmail error:", recoverError);
     }
 
     return new Response(JSON.stringify({ success: true }), {
