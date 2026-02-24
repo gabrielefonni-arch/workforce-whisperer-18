@@ -17,7 +17,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    // Detect recovery tokens in URL hash and redirect to /reset-password
+    const hash = window.location.hash;
+    if (hash && hash.includes('type=recovery') && !window.location.pathname.includes('/reset-password')) {
+      window.location.href = `/reset-password${hash}`;
+      return;
+    }
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY' && !window.location.pathname.includes('/reset-password')) {
+        window.location.href = '/reset-password';
+        return;
+      }
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
