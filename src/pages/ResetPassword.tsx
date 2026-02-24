@@ -14,16 +14,23 @@ export default function ResetPassword() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Listen for the PASSWORD_RECOVERY event from Supabase Auth
+    // 1) If the session already exists (token already consumed), allow reset
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) setReady(true);
+    });
+
+    // 2) Listen for the PASSWORD_RECOVERY event from the auth system
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'PASSWORD_RECOVERY') {
         setReady(true);
       }
     });
 
-    // Also check URL hash as fallback (for direct link access)
+    // 3) Also check URL hash/query as fallback (for direct link access)
     const hash = window.location.hash;
-    if (hash.includes('type=recovery') || hash.includes('access_token')) {
+    const search = window.location.search;
+    const combined = `${search}${hash}`;
+    if (combined.includes('type=recovery') || combined.includes('access_token') || combined.includes('refresh_token')) {
       setReady(true);
     }
 
