@@ -97,15 +97,24 @@ export function exportToPDF(
 
   // ── HTML ───────────────────────────────────────────────────────────
   let html = `<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8">
+  <meta name="viewport" content="width=1024">
   <title>Presenze ${escapeHtml(companyName)} – ${MONTHS_IT[month]} ${year}</title>
   <style>
-    @page { size: A4 landscape; margin: 10mm 12mm; }
+    @page { size: A4 landscape; margin: 8mm 10mm; }
     *  { box-sizing: border-box; margin:0; padding:0;
          -webkit-print-color-adjust:exact!important;
          print-color-adjust:exact!important; color-adjust:exact!important; }
+    html { width:100%; }
     body { font-family:'Segoe UI',Arial,sans-serif; font-size:9px;
-           color:#1a1a1a; background:#fff; }
-    @media print { * { -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important; } }
+           color:#1a1a1a; background:#fff; width:100%;
+           min-width:1000px; max-width:1200px; margin:0 auto; padding:8px; }
+    @media print {
+      * { -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important; }
+      html, body { width:100%; min-width:0; max-width:none; padding:0; margin:0; }
+      .no-print { display:none!important; }
+      .summary-grid { page-break-inside:avoid; }
+      .summary-card { page-break-inside:avoid; }
+    }
 
     /* ── HEADER ── */
     .header {
