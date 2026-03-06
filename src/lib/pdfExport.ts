@@ -97,24 +97,15 @@ export function exportToPDF(
 
   // ── HTML ───────────────────────────────────────────────────────────
   let html = `<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8">
-  <meta name="viewport" content="width=1024">
   <title>Presenze ${escapeHtml(companyName)} – ${MONTHS_IT[month]} ${year}</title>
   <style>
-    @page { size: A4 landscape; margin: 8mm 10mm; }
+    @page { size: A4 landscape; margin: 10mm 12mm; }
     *  { box-sizing: border-box; margin:0; padding:0;
          -webkit-print-color-adjust:exact!important;
          print-color-adjust:exact!important; color-adjust:exact!important; }
-    html { width:100%; }
     body { font-family:'Segoe UI',Arial,sans-serif; font-size:9px;
-           color:#1a1a1a; background:#fff; width:100%;
-           min-width:1000px; max-width:1200px; margin:0 auto; padding:8px; }
-    @media print {
-      * { -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important; }
-      html, body { width:100%; min-width:0; max-width:none; padding:0; margin:0; }
-      .no-print { display:none!important; }
-      .summary-grid { page-break-inside:avoid; }
-      .summary-card { page-break-inside:avoid; }
-    }
+           color:#1a1a1a; background:#fff; }
+    @media print { * { -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important; } }
 
     /* ── HEADER ── */
     .header {
@@ -150,13 +141,11 @@ export function exportToPDF(
     /* ── MAIN TABLE ── */
     table { border-collapse:collapse; width:100%; margin-bottom:18px;
             border-radius:8px; overflow:hidden;
-            box-shadow:0 2px 10px rgba(0,0,0,0.08);
-            table-layout:fixed; }
+            box-shadow:0 2px 10px rgba(0,0,0,0.08); }
     thead tr { background:${b.tableHeadGrad}; }
     th {
-      color:#fff; font-weight:700; font-size:7px; padding:5px 2px;
-      text-align:center; text-transform:uppercase; letter-spacing:0.3px;
-      word-break:break-all; overflow:hidden;
+      color:#fff; font-weight:700; font-size:7.5px; padding:7px 3px;
+      text-align:center; text-transform:uppercase; letter-spacing:0.4px;
     }
     th.col-name   { text-align:left; padding-left:12px; min-width:110px; font-size:8.5px; }
     th.col-total  { background:rgba(255,255,255,0.18); min-width:46px; }
@@ -388,28 +377,12 @@ export function exportToPDF(
   // ── FOOTER ───────────────────────────────────────────────────────────
   html += `<div class="footer">${escapeHtml(companyName)} &nbsp;·&nbsp; ${MONTHS_IT[month]} ${year} &nbsp;·&nbsp; Documento riservato – generato automaticamente il ${format(new Date(), 'dd/MM/yyyy HH:mm')}</div>`;
 
-  // ── PRINT BUTTON (mobile-friendly, hidden on print) ─────────────────
-  html += `<div class="no-print" style="text-align:center;padding:20px 0;">
-    <button onclick="window.print()" style="
-      padding:14px 40px; font-size:16px; font-weight:700; border:none; border-radius:8px;
-      background:${b.primary}; color:#fff; cursor:pointer; touch-action:manipulation;
-      -webkit-tap-highlight-color:transparent;
-    ">📄 Stampa / Salva PDF</button>
-  </div>`;
-
   html += `</body></html>`;
 
-  // iOS Safari doesn't handle window.open + print well.
-  // Use a more robust approach: write to a new window, then let user trigger print.
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-  
   const win = window.open('', '_blank');
   if (win) {
     win.document.write(html);
     win.document.close();
-    // On iOS, don't auto-print (it often fails or cuts pages). Show button instead.
-    if (!isIOS) {
-      setTimeout(() => win.print(), 600);
-    }
+    setTimeout(() => win.print(), 500);
   }
 }
