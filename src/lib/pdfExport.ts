@@ -388,12 +388,28 @@ export function exportToPDF(
   // ── FOOTER ───────────────────────────────────────────────────────────
   html += `<div class="footer">${escapeHtml(companyName)} &nbsp;·&nbsp; ${MONTHS_IT[month]} ${year} &nbsp;·&nbsp; Documento riservato – generato automaticamente il ${format(new Date(), 'dd/MM/yyyy HH:mm')}</div>`;
 
+  // ── PRINT BUTTON (mobile-friendly, hidden on print) ─────────────────
+  html += `<div class="no-print" style="text-align:center;padding:20px 0;">
+    <button onclick="window.print()" style="
+      padding:14px 40px; font-size:16px; font-weight:700; border:none; border-radius:8px;
+      background:${b.primary}; color:#fff; cursor:pointer; touch-action:manipulation;
+      -webkit-tap-highlight-color:transparent;
+    ">📄 Stampa / Salva PDF</button>
+  </div>`;
+
   html += `</body></html>`;
 
+  // iOS Safari doesn't handle window.open + print well.
+  // Use a more robust approach: write to a new window, then let user trigger print.
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  
   const win = window.open('', '_blank');
   if (win) {
     win.document.write(html);
     win.document.close();
-    setTimeout(() => win.print(), 500);
+    // On iOS, don't auto-print (it often fails or cuts pages). Show button instead.
+    if (!isIOS) {
+      setTimeout(() => win.print(), 600);
+    }
   }
 }
