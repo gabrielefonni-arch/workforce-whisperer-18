@@ -92,21 +92,6 @@ export function exportToPDF(
     };
   });
 
-  // ── Build location abbreviation map ────────────────────────────────
-  const allLocations = new Set<string>();
-  employees.forEach(emp => {
-    days.forEach(d => {
-      const entry = emp.days[dateKey(d)];
-      if (entry?.location?.trim()) allLocations.add(entry.location.trim());
-    });
-  });
-  const locAbbrevMap: Record<string, string> = {};
-  let locIndex = 1;
-  Array.from(allLocations).sort().forEach(loc => {
-    locAbbrevMap[loc] = `L${locIndex}`;
-    locIndex++;
-  });
-
   // ── Totals row ─────────────────────────────────────────────────────
   const grandTotalHours = employees.reduce((s, e) => s + stats[e.id].totalHours, 0);
 
@@ -169,26 +154,25 @@ export function exportToPDF(
             table-layout:fixed; }
     thead tr { background:${b.tableHeadGrad}; }
     th {
-      color:#fff; font-weight:700; font-size:7px; padding:5px 1px;
-      text-align:center; text-transform:uppercase; letter-spacing:0;
-      overflow:hidden;
+      color:#fff; font-weight:700; font-size:7px; padding:5px 2px;
+      text-align:center; text-transform:uppercase; letter-spacing:0.3px;
+      word-break:break-all; overflow:hidden;
     }
-    th.col-name   { text-align:left; padding-left:8px; width:100px; font-size:7.5px; }
-    th.col-total  { background:rgba(255,255,255,0.18); width:36px; }
+    th.col-name   { text-align:left; padding-left:12px; min-width:110px; font-size:8.5px; }
+    th.col-total  { background:rgba(255,255,255,0.18); min-width:46px; }
     th.col-we     { background:rgba(0,0,0,0.15); }
 
     td {
       border-bottom:1px solid #f0eeea; border-right:1px solid #f5f3f0;
-      padding:3px 1px; text-align:center; font-size:8px; vertical-align:middle;
-      overflow:hidden;
+      padding:4px 2px; text-align:center; font-size:8.5px; vertical-align:middle;
     }
     td.col-name {
-      text-align:left; padding-left:8px; font-weight:700; font-size:8px;
-      background:#fafafa; border-left:3px solid ${b.nameBorder}; color:#111;
-      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+      text-align:left; padding-left:12px; font-weight:700; font-size:10px;
+      background:#fafafa; border-left:4px solid ${b.nameBorder}; color:#111;
+      white-space:nowrap;
     }
     td.col-total {
-      font-weight:900; font-size:11px; background:${b.totalBg}; color:${b.totalColor};
+      font-weight:900; font-size:12px; background:${b.totalBg}; color:${b.totalColor};
       border-left:1px solid rgba(0,0,0,0.08);
     }
     td.col-we     { background:#f7f7f7; color:#bbb; }
@@ -199,18 +183,18 @@ export function exportToPDF(
     td.s-sick     { background:#fff1f2; }
     td.s-holiday  { background:#eff6ff; }
 
-    .cell-hrs  { font-weight:800; font-size:9px; display:block; line-height:1.2; }
+    .cell-hrs  { font-weight:800; font-size:10px; display:block; line-height:1.2; }
     .cell-hrs.present { color:#15803d; }
     .cell-hrs.injury  { color:#b45309; }
     .cell-hrs.sick    { color:#be123c; }
     .cell-hrs.holiday { color:#1d4ed8; }
-    .cell-badge { font-size:6px; font-weight:800; text-transform:uppercase;
-                  letter-spacing:0.3px; padding:1px 2px; border-radius:2px; display:inline-block; }
+    .cell-loc  { font-size:6.5px; color:#888; display:block; white-space:nowrap;
+                 overflow:hidden; text-overflow:ellipsis; max-width:54px; }
+    .cell-badge { font-size:7px; font-weight:800; text-transform:uppercase;
+                  letter-spacing:0.4px; padding:1px 3px; border-radius:3px; display:inline-block; }
     .badge-injury  { background:#fef3c7; color:#92400e; }
     .badge-sick    { background:#ffe4e6; color:#9f1239; }
     .badge-holiday { background:#dbeafe; color:#1e40af; }
-    .cell-loc-code { font-size:5.5px; color:#666; display:block; line-height:1; margin-top:1px;
-                     font-weight:600; }
 
     /* grand-total row */
     tr.grand-total td {
@@ -228,34 +212,28 @@ export function exportToPDF(
       font-size:13px; font-weight:900; color:${b.primaryDark}; margin-bottom:10px;
       padding-bottom:5px; border-bottom:3px solid ${b.primary}; display:inline-block;
     }
-    .summary-grid {
-      display:grid; grid-template-columns:repeat(3, 1fr); gap:8px;
-    }
-    @media print {
-      .summary-grid { grid-template-columns:repeat(3, 1fr); }
-    }
+    .summary-grid { display:flex; flex-wrap:wrap; gap:10px; }
     .summary-card {
-      border:1px solid #e8e8ee; border-radius:8px; padding:8px 10px;
+      border:1px solid #e8e8ee; border-radius:10px; padding:10px 14px;
+      min-width:200px; flex:1;
       background:linear-gradient(135deg, #fafafa 0%, #fff 100%);
-      box-shadow:0 1px 4px rgba(0,0,0,0.04);
+      box-shadow:0 1px 5px rgba(0,0,0,0.05);
       border-top:3px solid ${b.summaryAccent};
-      page-break-inside:avoid;
-      overflow:hidden;
     }
-    .s-card-name { font-size:9px; font-weight:800; margin-bottom:5px; color:#111; }
-    .s-card-stats { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:4px; }
+    .s-card-name { font-size:11px; font-weight:800; margin-bottom:7px; color:#111; }
+    .s-card-stats { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:6px; }
     .s-stat { text-align:center; }
     .s-stat-val {
-      font-size:13px; font-weight:900; color:${b.primary}; display:block; line-height:1;
+      font-size:16px; font-weight:900; color:${b.primary}; display:block; line-height:1;
     }
     .s-stat-val.v-present  { color:#15803d; }
     .s-stat-val.v-injury   { color:#b45309; }
     .s-stat-val.v-sick     { color:#be123c; }
     .s-stat-val.v-holiday  { color:#1d4ed8; }
     .s-stat-val.v-absence  { color:#6b7280; }
-    .s-stat-lbl { font-size:6.5px; color:#888; text-transform:uppercase; letter-spacing:0.3px; }
-    .s-divider  { height:1px; background:#f0f0f0; margin:4px 0; }
-    .s-locs     { font-size:7px; color:#666; line-height:1.5; word-break:break-word; }
+    .s-stat-lbl { font-size:8px; color:#888; text-transform:uppercase; letter-spacing:0.4px; }
+    .s-divider  { height:1px; background:#f0f0f0; margin:6px 0; }
+    .s-locs     { font-size:8px; color:#666; line-height:1.6; }
     .s-locs strong { color:${b.primary}; font-weight:700; }
 
     /* ── FOOTER ── */
@@ -263,12 +241,6 @@ export function exportToPDF(
       margin-top:16px; text-align:center; font-size:8px; color:#bbb;
       border-top:1px solid #f0f0f0; padding-top:8px;
     }
-    .legend { margin-bottom:14px; padding:8px 12px; background:#fafafa; border:1px solid #eee;
-              border-radius:8px; font-size:8px; color:#444; line-height:1.8; }
-    .legend-title { font-weight:800; font-size:9px; color:${b.primaryDark}; margin-bottom:4px;
-                    border-left:3px solid ${b.accent}; padding-left:8px; }
-    .legend-item { display:inline-block; margin-right:12px; }
-    .legend-code { font-weight:800; color:${b.primary}; }
   </style></head><body>`;
 
   // ── HEADER ──────────────────────────────────────────────────────────
@@ -327,10 +299,7 @@ export function exportToPDF(
       if (st === 'injury' && !entry.hours)  inner += `<span class="cell-badge badge-injury">INF</span>`;
       if (st === 'sick' && !entry.hours)    inner += `<span class="cell-badge badge-sick">MAL</span>`;
       if (st === 'holiday' && !entry.hours) inner += `<span class="cell-badge badge-holiday">FES</span>`;
-      if (entry.location?.trim()) {
-        const code = locAbbrevMap[entry.location.trim()] || '';
-        inner += `<span class="cell-loc-code">${code}</span>`;
-      }
+      if (entry.location)                   inner += `<span class="cell-loc" title="${escapeHtml(entry.location)}">${escapeHtml(entry.location)}</span>`;
 
       html += `<td class="${tdClass}">${inner}</td>`;
     });
@@ -349,16 +318,6 @@ export function exportToPDF(
   html += `<td class="col-total">${grandTotalHours}</td></tr>`;
 
   html += `</tbody></table>`;
-
-  // ── LOCATION LEGEND ─────────────────────────────────────────────────
-  if (Object.keys(locAbbrevMap).length > 0) {
-    html += `<div class="legend">
-      <div class="legend-title">📍 Legenda Cantieri / Vie</div>`;
-    Object.entries(locAbbrevMap).sort((a, b) => a[1].localeCompare(b[1])).forEach(([loc, code]) => {
-      html += `<span class="legend-item"><span class="legend-code">${code}</span> = ${escapeHtml(loc)}</span>`;
-    });
-    html += `</div>`;
-  }
 
   // ── SUMMARY ──────────────────────────────────────────────────────────
   html += `<div><span class="summary-title">Riepilogo Mensile per Dipendente</span></div>`;
@@ -412,10 +371,10 @@ export function exportToPDF(
   const totalHoliday  = employees.reduce((s, e) => s + stats[e.id].holidayDays, 0);
   const totalAbsence  = employees.reduce((s, e) => s + stats[e.id].absenceDays, 0);
 
-  html += `<div class="summary-card" style="grid-column:1/-1;border-top-color:${b.primaryDark};background:linear-gradient(135deg,${b.primaryLight},#fff);">
-    <div class="s-card-name" style="color:${b.primaryDark};font-size:10px">📊 RIEPILOGO GENERALE – ${employees.length} DIPENDENTI</div>
+  html += `<div class="summary-card" style="border-top-color:${b.primaryDark};background:linear-gradient(135deg,${b.primaryLight},#fff);">
+    <div class="s-card-name" style="color:${b.primaryDark};font-size:12px">📊 RIEPILOGO GENERALE – ${employees.length} DIPENDENTI</div>
     <div class="s-card-stats">
-      <div class="s-stat"><span class="s-stat-val" style="font-size:16px">${grandTotalHours}</span><span class="s-stat-lbl">Ore Totali</span></div>
+      <div class="s-stat"><span class="s-stat-val" style="font-size:20px">${grandTotalHours}</span><span class="s-stat-lbl">Ore Totali</span></div>
       <div class="s-stat"><span class="s-stat-val v-present">${totalPresent}</span><span class="s-stat-lbl">Presenze</span></div>
       <div class="s-stat"><span class="s-stat-val v-injury">${totalInjury}</span><span class="s-stat-lbl">Infortuni</span></div>
       <div class="s-stat"><span class="s-stat-val v-sick">${totalSick}</span><span class="s-stat-lbl">Malattia</span></div>
