@@ -225,20 +225,20 @@ export function exportToPDF(
       page-break-inside:avoid;
       overflow:hidden;
     }
-    .s-card-name { font-size:11px; font-weight:800; margin-bottom:7px; color:#111; }
-    .s-card-stats { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:6px; }
+    .s-card-name { font-size:9px; font-weight:800; margin-bottom:5px; color:#111; }
+    .s-card-stats { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:4px; }
     .s-stat { text-align:center; }
     .s-stat-val {
-      font-size:16px; font-weight:900; color:${b.primary}; display:block; line-height:1;
+      font-size:13px; font-weight:900; color:${b.primary}; display:block; line-height:1;
     }
     .s-stat-val.v-present  { color:#15803d; }
     .s-stat-val.v-injury   { color:#b45309; }
     .s-stat-val.v-sick     { color:#be123c; }
     .s-stat-val.v-holiday  { color:#1d4ed8; }
     .s-stat-val.v-absence  { color:#6b7280; }
-    .s-stat-lbl { font-size:8px; color:#888; text-transform:uppercase; letter-spacing:0.4px; }
-    .s-divider  { height:1px; background:#f0f0f0; margin:6px 0; }
-    .s-locs     { font-size:8px; color:#666; line-height:1.6; }
+    .s-stat-lbl { font-size:6.5px; color:#888; text-transform:uppercase; letter-spacing:0.3px; }
+    .s-divider  { height:1px; background:#f0f0f0; margin:4px 0; }
+    .s-locs     { font-size:7px; color:#666; line-height:1.5; word-break:break-word; }
     .s-locs strong { color:${b.primary}; font-weight:700; }
 
     /* ── FOOTER ── */
