@@ -150,11 +150,13 @@ export function exportToPDF(
     /* ── MAIN TABLE ── */
     table { border-collapse:collapse; width:100%; margin-bottom:18px;
             border-radius:8px; overflow:hidden;
-            box-shadow:0 2px 10px rgba(0,0,0,0.08); }
+            box-shadow:0 2px 10px rgba(0,0,0,0.08);
+            table-layout:fixed; }
     thead tr { background:${b.tableHeadGrad}; }
     th {
-      color:#fff; font-weight:700; font-size:7.5px; padding:7px 3px;
-      text-align:center; text-transform:uppercase; letter-spacing:0.4px;
+      color:#fff; font-weight:700; font-size:7px; padding:5px 2px;
+      text-align:center; text-transform:uppercase; letter-spacing:0.3px;
+      word-break:break-all; overflow:hidden;
     }
     th.col-name   { text-align:left; padding-left:12px; min-width:110px; font-size:8.5px; }
     th.col-total  { background:rgba(255,255,255,0.18); min-width:46px; }
