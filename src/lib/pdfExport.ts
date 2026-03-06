@@ -298,7 +298,7 @@ export function exportToPDF(
       if (st === 'injury' && !entry.hours)  inner += `<span class="cell-badge badge-injury">INF</span>`;
       if (st === 'sick' && !entry.hours)    inner += `<span class="cell-badge badge-sick">MAL</span>`;
       if (st === 'holiday' && !entry.hours) inner += `<span class="cell-badge badge-holiday">FES</span>`;
-      if (entry.location)                   inner += `<span class="cell-loc" title="${escapeHtml(entry.location)}">${escapeHtml(entry.location)}</span>`;
+      // Location removed from cells - shown only in summary cards below
 
       html += `<td class="${tdClass}">${inner}</td>`;
     });
