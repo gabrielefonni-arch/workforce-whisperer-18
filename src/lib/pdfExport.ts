@@ -92,6 +92,21 @@ export function exportToPDF(
     };
   });
 
+  // ── Build location abbreviation map ────────────────────────────────
+  const allLocations = new Set<string>();
+  employees.forEach(emp => {
+    days.forEach(d => {
+      const entry = emp.days[dateKey(d)];
+      if (entry?.location?.trim()) allLocations.add(entry.location.trim());
+    });
+  });
+  const locAbbrevMap: Record<string, string> = {};
+  let locIndex = 1;
+  Array.from(allLocations).sort().forEach(loc => {
+    locAbbrevMap[loc] = `L${locIndex}`;
+    locIndex++;
+  });
+
   // ── Totals row ─────────────────────────────────────────────────────
   const grandTotalHours = employees.reduce((s, e) => s + stats[e.id].totalHours, 0);
 
@@ -194,6 +209,8 @@ export function exportToPDF(
     .badge-injury  { background:#fef3c7; color:#92400e; }
     .badge-sick    { background:#ffe4e6; color:#9f1239; }
     .badge-holiday { background:#dbeafe; color:#1e40af; }
+    .cell-loc-code { font-size:5.5px; color:#666; display:block; line-height:1; margin-top:1px;
+                     font-weight:600; }
 
     /* grand-total row */
     tr.grand-total td {
@@ -246,6 +263,12 @@ export function exportToPDF(
       margin-top:16px; text-align:center; font-size:8px; color:#bbb;
       border-top:1px solid #f0f0f0; padding-top:8px;
     }
+    .legend { margin-bottom:14px; padding:8px 12px; background:#fafafa; border:1px solid #eee;
+              border-radius:8px; font-size:8px; color:#444; line-height:1.8; }
+    .legend-title { font-weight:800; font-size:9px; color:${b.primaryDark}; margin-bottom:4px;
+                    border-left:3px solid ${b.accent}; padding-left:8px; }
+    .legend-item { display:inline-block; margin-right:12px; }
+    .legend-code { font-weight:800; color:${b.primary}; }
   </style></head><body>`;
 
   // ── HEADER ──────────────────────────────────────────────────────────
@@ -304,7 +327,10 @@ export function exportToPDF(
       if (st === 'injury' && !entry.hours)  inner += `<span class="cell-badge badge-injury">INF</span>`;
       if (st === 'sick' && !entry.hours)    inner += `<span class="cell-badge badge-sick">MAL</span>`;
       if (st === 'holiday' && !entry.hours) inner += `<span class="cell-badge badge-holiday">FES</span>`;
-      // Location removed from cells - shown only in summary cards below
+      if (entry.location?.trim()) {
+        const code = locAbbrevMap[entry.location.trim()] || '';
+        inner += `<span class="cell-loc-code">${code}</span>`;
+      }
 
       html += `<td class="${tdClass}">${inner}</td>`;
     });
@@ -323,6 +349,16 @@ export function exportToPDF(
   html += `<td class="col-total">${grandTotalHours}</td></tr>`;
 
   html += `</tbody></table>`;
+
+  // ── LOCATION LEGEND ─────────────────────────────────────────────────
+  if (Object.keys(locAbbrevMap).length > 0) {
+    html += `<div class="legend">
+      <div class="legend-title">📍 Legenda Cantieri / Vie</div>`;
+    Object.entries(locAbbrevMap).sort((a, b) => a[1].localeCompare(b[1])).forEach(([loc, code]) => {
+      html += `<span class="legend-item"><span class="legend-code">${code}</span> = ${escapeHtml(loc)}</span>`;
+    });
+    html += `</div>`;
+  }
 
   // ── SUMMARY ──────────────────────────────────────────────────────────
   html += `<div><span class="summary-title">Riepilogo Mensile per Dipendente</span></div>`;
