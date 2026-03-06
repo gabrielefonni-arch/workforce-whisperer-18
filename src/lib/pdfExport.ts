@@ -209,6 +209,8 @@ export function exportToPDF(
     .badge-injury  { background:#fef3c7; color:#92400e; }
     .badge-sick    { background:#ffe4e6; color:#9f1239; }
     .badge-holiday { background:#dbeafe; color:#1e40af; }
+    .cell-loc-code { font-size:5.5px; color:#666; display:block; line-height:1; margin-top:1px;
+                     font-weight:600; }
 
     /* grand-total row */
     tr.grand-total td {
