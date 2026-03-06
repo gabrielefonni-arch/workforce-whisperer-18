@@ -376,10 +376,10 @@ export function exportToPDF(
   const totalHoliday  = employees.reduce((s, e) => s + stats[e.id].holidayDays, 0);
   const totalAbsence  = employees.reduce((s, e) => s + stats[e.id].absenceDays, 0);
 
-  html += `<div class="summary-card" style="border-top-color:${b.primaryDark};background:linear-gradient(135deg,${b.primaryLight},#fff);">
-    <div class="s-card-name" style="color:${b.primaryDark};font-size:12px">📊 RIEPILOGO GENERALE – ${employees.length} DIPENDENTI</div>
+  html += `<div class="summary-card" style="grid-column:1/-1;border-top-color:${b.primaryDark};background:linear-gradient(135deg,${b.primaryLight},#fff);">
+    <div class="s-card-name" style="color:${b.primaryDark};font-size:10px">📊 RIEPILOGO GENERALE – ${employees.length} DIPENDENTI</div>
     <div class="s-card-stats">
-      <div class="s-stat"><span class="s-stat-val" style="font-size:20px">${grandTotalHours}</span><span class="s-stat-lbl">Ore Totali</span></div>
+      <div class="s-stat"><span class="s-stat-val" style="font-size:16px">${grandTotalHours}</span><span class="s-stat-lbl">Ore Totali</span></div>
       <div class="s-stat"><span class="s-stat-val v-present">${totalPresent}</span><span class="s-stat-lbl">Presenze</span></div>
       <div class="s-stat"><span class="s-stat-val v-injury">${totalInjury}</span><span class="s-stat-lbl">Infortuni</span></div>
       <div class="s-stat"><span class="s-stat-val v-sick">${totalSick}</span><span class="s-stat-lbl">Malattia</span></div>
