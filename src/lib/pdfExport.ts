@@ -263,6 +263,12 @@ export function exportToPDF(
       margin-top:16px; text-align:center; font-size:8px; color:#bbb;
       border-top:1px solid #f0f0f0; padding-top:8px;
     }
+    .legend { margin-bottom:14px; padding:8px 12px; background:#fafafa; border:1px solid #eee;
+              border-radius:8px; font-size:8px; color:#444; line-height:1.8; }
+    .legend-title { font-weight:800; font-size:9px; color:${b.primaryDark}; margin-bottom:4px;
+                    border-left:3px solid ${b.accent}; padding-left:8px; }
+    .legend-item { display:inline-block; margin-right:12px; }
+    .legend-code { font-weight:800; color:${b.primary}; }
   </style></head><body>`;
 
   // ── HEADER ──────────────────────────────────────────────────────────
