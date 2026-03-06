@@ -327,7 +327,10 @@ export function exportToPDF(
       if (st === 'injury' && !entry.hours)  inner += `<span class="cell-badge badge-injury">INF</span>`;
       if (st === 'sick' && !entry.hours)    inner += `<span class="cell-badge badge-sick">MAL</span>`;
       if (st === 'holiday' && !entry.hours) inner += `<span class="cell-badge badge-holiday">FES</span>`;
-      // Location removed from cells - shown only in summary cards below
+      if (entry.location?.trim()) {
+        const code = locAbbrevMap[entry.location.trim()] || '';
+        inner += `<span class="cell-loc-code">${code}</span>`;
+      }
 
       html += `<td class="${tdClass}">${inner}</td>`;
     });
