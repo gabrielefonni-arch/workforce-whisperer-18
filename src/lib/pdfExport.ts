@@ -350,6 +350,16 @@ export function exportToPDF(
 
   html += `</tbody></table>`;
 
+  // ── LOCATION LEGEND ─────────────────────────────────────────────────
+  if (Object.keys(locAbbrevMap).length > 0) {
+    html += `<div class="legend">
+      <div class="legend-title">📍 Legenda Cantieri / Vie</div>`;
+    Object.entries(locAbbrevMap).sort((a, b) => a[1].localeCompare(b[1])).forEach(([loc, code]) => {
+      html += `<span class="legend-item"><span class="legend-code">${code}</span> = ${escapeHtml(loc)}</span>`;
+    });
+    html += `</div>`;
+  }
+
   // ── SUMMARY ──────────────────────────────────────────────────────────
   html += `<div><span class="summary-title">Riepilogo Mensile per Dipendente</span></div>`;
   html += `<div class="summary-grid">`;
