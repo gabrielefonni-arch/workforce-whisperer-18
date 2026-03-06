@@ -92,6 +92,21 @@ export function exportToPDF(
     };
   });
 
+  // ── Build location abbreviation map ────────────────────────────────
+  const allLocations = new Set<string>();
+  employees.forEach(emp => {
+    days.forEach(d => {
+      const entry = emp.days[dateKey(d)];
+      if (entry?.location?.trim()) allLocations.add(entry.location.trim());
+    });
+  });
+  const locAbbrevMap: Record<string, string> = {};
+  let locIndex = 1;
+  Array.from(allLocations).sort().forEach(loc => {
+    locAbbrevMap[loc] = `L${locIndex}`;
+    locIndex++;
+  });
+
   // ── Totals row ─────────────────────────────────────────────────────
   const grandTotalHours = employees.reduce((s, e) => s + stats[e.id].totalHours, 0);
 
