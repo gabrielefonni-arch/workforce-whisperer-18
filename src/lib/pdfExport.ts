@@ -211,13 +211,19 @@ export function exportToPDF(
       font-size:13px; font-weight:900; color:${b.primaryDark}; margin-bottom:10px;
       padding-bottom:5px; border-bottom:3px solid ${b.primary}; display:inline-block;
     }
-    .summary-grid { display:flex; flex-wrap:wrap; gap:10px; }
+    .summary-grid {
+      display:grid; grid-template-columns:repeat(3, 1fr); gap:8px;
+    }
+    @media print {
+      .summary-grid { grid-template-columns:repeat(3, 1fr); }
+    }
     .summary-card {
-      border:1px solid #e8e8ee; border-radius:10px; padding:10px 14px;
-      min-width:200px; flex:1;
+      border:1px solid #e8e8ee; border-radius:8px; padding:8px 10px;
       background:linear-gradient(135deg, #fafafa 0%, #fff 100%);
-      box-shadow:0 1px 5px rgba(0,0,0,0.05);
+      box-shadow:0 1px 4px rgba(0,0,0,0.04);
       border-top:3px solid ${b.summaryAccent};
+      page-break-inside:avoid;
+      overflow:hidden;
     }
     .s-card-name { font-size:11px; font-weight:800; margin-bottom:7px; color:#111; }
     .s-card-stats { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:6px; }
