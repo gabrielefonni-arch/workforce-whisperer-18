@@ -1,0 +1,1 @@
+REVOKE ALL ON FUNCTION public.archive_day_entry() FROM PUBLIC, anon, authenticated;
