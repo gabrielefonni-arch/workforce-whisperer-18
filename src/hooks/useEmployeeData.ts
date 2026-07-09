@@ -34,13 +34,25 @@ export function useEmployeeData(sectionId: string) {
 
       const empIds = emps.map(e => e.id);
 
-      // 2. Single batch query for ALL day entries (no N+1)
-      const { data: entries, error: entriesError } = await supabase
-        .from('day_entries')
-        .select('employee_id, date_key, status, hours, location')
-        .in('employee_id', empIds);
+      // 2. Batch query for ALL day entries with pagination (PostgREST caps at 1000 rows per request)
+      const PAGE_SIZE = 1000;
+      let allEntries: { employee_id: string; date_key: string; status: string | null; hours: number | null; location: string | null }[] = [];
+      let page = 0;
+      while (true) {
+        const { data: pageData, error: entriesError } = await supabase
+          .from('day_entries')
+          .select('employee_id, date_key, status, hours, location')
+          .in('employee_id', empIds)
+          .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
 
-      if (entriesError) throw entriesError;
+        if (entriesError) throw entriesError;
+        if (!pageData || pageData.length === 0) break;
+        allEntries = allEntries.concat(pageData);
+        if (pageData.length < PAGE_SIZE) break;
+        page++;
+      }
+      const entries = allEntries;
+
 
       // 3. Group entries by employee_id in memory (O(n))
       const entriesByEmp: Record<string, Record<string, DayEntry>> = {};

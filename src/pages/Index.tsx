@@ -22,8 +22,9 @@ const Index = () => {
   const { signOut } = useAuth();
   const { data, addEmployee, removeEmployee, updateDayEntry } = useEmployeeData(currentSection.id);
   const [newName, setNewName] = useState('');
-  const [selectedYear, setSelectedYear] = useState(2026);
-  const [selectedMonth, setSelectedMonth] = useState(2);
+  const now = new Date();
+  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
   const [selectedWeekStart, setSelectedWeekStart] = useState<Date | null>(null);
 
   const isAppointments = currentSection.type === 'appointments';
