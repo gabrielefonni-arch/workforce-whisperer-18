@@ -87,6 +87,7 @@ const Index = () => {
                 <span className="hidden sm:inline">PDF</span>
               </Button>
             )}
+            <ArchiveSheet />
             <SettingsSheet />
             <Button onClick={handleSignOut} variant="secondary" size="sm" className="gap-1 text-xs px-2.5">
               <LogOut className="h-3.5 w-3.5" />
