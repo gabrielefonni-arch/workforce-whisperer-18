@@ -16,6 +16,7 @@ import logoImg from '@/assets/logo.png';
 import { toast } from 'sonner';
 import { CompanySelector } from '@/components/CompanySelector';
 import { SettingsSheet } from '@/components/SettingsSheet';
+import { ArchiveSheet } from '@/components/ArchiveSheet';
 
 const Index = () => {
   const { currentCompany, currentSection } = useCompany();
@@ -86,6 +87,7 @@ const Index = () => {
                 <span className="hidden sm:inline">PDF</span>
               </Button>
             )}
+            <ArchiveSheet />
             <SettingsSheet />
             <Button onClick={handleSignOut} variant="secondary" size="sm" className="gap-1 text-xs px-2.5">
               <LogOut className="h-3.5 w-3.5" />

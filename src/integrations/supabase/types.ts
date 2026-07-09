@@ -88,6 +88,42 @@ export type Database = {
           },
         ]
       }
+      day_entries_history: {
+        Row: {
+          changed_at: string
+          date_key: string
+          employee_id: string
+          hours: number | null
+          id: string
+          location: string | null
+          operation: string
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          changed_at?: string
+          date_key: string
+          employee_id: string
+          hours?: number | null
+          id?: string
+          location?: string | null
+          operation: string
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          changed_at?: string
+          date_key?: string
+          employee_id?: string
+          hours?: number | null
+          id?: string
+          location?: string | null
+          operation?: string
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       employees: {
         Row: {
           created_at: string
