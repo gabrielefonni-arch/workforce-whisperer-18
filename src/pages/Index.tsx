@@ -16,6 +16,7 @@ import logoImg from '@/assets/logo.png';
 import { toast } from 'sonner';
 import { CompanySelector } from '@/components/CompanySelector';
 import { SettingsSheet } from '@/components/SettingsSheet';
+import { ArchiveSheet } from '@/components/ArchiveSheet';
 
 const Index = () => {
   const { currentCompany, currentSection } = useCompany();
