@@ -91,14 +91,24 @@ export default function Auth() {
           {mode !== 'forgot' && (
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1 block">Password</label>
-              <Input
-                type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="h-10"
-                autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-              />
+              <div className="relative">
+                <Input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="h-10 pr-10"
+                  autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(v => !v)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  aria-label={showPassword ? 'Nascondi password' : 'Mostra password'}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
           )}
           <Button type="submit" className="w-full gap-2" disabled={loading}>
