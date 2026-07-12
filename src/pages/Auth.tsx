@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import logoImg from '@/assets/logo.png';
-import { LogIn, UserPlus, KeyRound } from 'lucide-react';
+import { LogIn, UserPlus, KeyRound, Eye, EyeOff } from 'lucide-react';
 
 type Mode = 'login' | 'register' | 'forgot';
 
@@ -12,6 +12,7 @@ export default function Auth() {
   const [mode, setMode] = useState<Mode>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
