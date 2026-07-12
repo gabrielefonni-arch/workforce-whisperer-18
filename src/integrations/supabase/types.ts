@@ -148,6 +148,30 @@ export type Database = {
         }
         Relationships: []
       }
+      location_history: {
+        Row: {
+          id: string
+          last_used_at: string
+          location: string
+          section_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          last_used_at?: string
+          location: string
+          section_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          last_used_at?: string
+          location?: string
+          section_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       push_subscriptions: {
         Row: {
           auth: string
