@@ -126,7 +126,7 @@ export function ArchiveSheet() {
         </SheetHeader>
 
         <p className="text-xs text-muted-foreground mt-2">
-          Qui viene conservata l'ultima versione salvata di ogni giornata, sempre aggiornata.
+          Ogni modifica ai giorni viene salvata qui automaticamente e non può essere persa.
           {rows.length > 0 && ` (${rows.length} voci)`}
         </p>
 
