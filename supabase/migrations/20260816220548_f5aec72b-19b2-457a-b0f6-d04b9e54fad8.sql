@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.cloud_keepalive_ping() FROM PUBLIC, anon, authenticated;
