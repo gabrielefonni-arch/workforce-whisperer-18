@@ -38,7 +38,9 @@ const App = () => (
           <Toaster />
           <Sonner />
           <PWAUpdatePrompt />
+          <BackendStatusBanner />
           <BrowserRouter>
+
             <Routes>
               <Route path="/auth" element={<AuthRoute />} />
               <Route path="/reset-password" element={<ResetPassword />} />
