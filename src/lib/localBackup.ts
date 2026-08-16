@@ -37,6 +37,20 @@ function pruneOld(sectionId: string) {
   }
 }
 
+/** Most recent local snapshot for a section, used as offline fallback. */
+export function latestLocalBackup(sectionId: string): BackupSnapshot | null {
+  const keys = Object.keys(localStorage)
+    .filter(k => k.startsWith(`${PREFIX}${sectionId}:`))
+    .sort();
+  const newest = keys.pop();
+  if (!newest) return null;
+  try {
+    return JSON.parse(localStorage.getItem(newest) || 'null') as BackupSnapshot | null;
+  } catch {
+    return null;
+  }
+}
+
 export function listLocalBackups(): BackupSnapshot[] {
   return Object.keys(localStorage)
     .filter(k => k.startsWith(PREFIX))

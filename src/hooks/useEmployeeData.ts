@@ -5,7 +5,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import type { EmployeeData, DayEntry, Employee } from '@/types/employee';
 import { employeeSchema, dayEntrySchema } from '@/lib/validation';
-import { saveLocalBackup } from '@/lib/localBackup';
+import { saveLocalBackup, latestLocalBackup } from '@/lib/localBackup';
+import { enqueueWrite, flushQueue, pendingCount } from '@/lib/offlineQueue';
 
 
 export function useEmployeeData(sectionId: string) {
@@ -14,6 +15,8 @@ export function useEmployeeData(sectionId: string) {
   const [loading, setLoading] = useState(true);
   // Prevent duplicate concurrent loads
   const loadingRef = useRef(false);
+  const dataRef = useRef(data);
+  dataRef.current = data;
 
   const loadData = useCallback(async () => {
     if (!user || loadingRef.current) return;
@@ -78,7 +81,14 @@ export function useEmployeeData(sectionId: string) {
 
     } catch (err) {
       console.error('Error loading employees:', err);
-      toast.error('Errore nel caricamento dati. Riprova.');
+      // Offline / backend unreachable: fall back to the last local snapshot
+      const snapshot = latestLocalBackup(sectionId);
+      if (snapshot?.data?.employees?.length) {
+        setData(snapshot.data);
+        toast.warning('Server non raggiungibile: dati mostrati dalla copia locale. Le modifiche verranno sincronizzate appena torna la connessione.');
+      } else {
+        toast.error('Errore nel caricamento dati. Riprova.');
+      }
     } finally {
       setLoading(false);
       loadingRef.current = false;
@@ -89,6 +99,26 @@ export function useEmployeeData(sectionId: string) {
     setData({ employees: [] });
     loadData();
   }, [loadData]);
+
+  // Sync any writes queued while the backend was unreachable
+  useEffect(() => {
+    if (!user) return;
+    const trySync = async () => {
+      if (!pendingCount()) return;
+      const sent = await flushQueue();
+      if (sent > 0) {
+        toast.success(`${sent} modifiche in attesa sincronizzate`);
+        loadData();
+      }
+    };
+    trySync();
+    window.addEventListener('online', trySync);
+    const timer = window.setInterval(trySync, 60000);
+    return () => {
+      window.removeEventListener('online', trySync);
+      window.clearInterval(timer);
+    };
+  }, [user, loadData]);
 
   const addEmployee = useCallback(async (name: string) => {
     if (!user) return;
@@ -154,11 +184,23 @@ export function useEmployeeData(sectionId: string) {
 
     if (error) {
       console.error(error);
-      toast.error('Errore nel salvataggio. Riprova.');
-      // Revert optimistic update on failure
-      loadData();
+      // Never lose data: keep the optimistic value and queue the write locally
+      enqueueWrite({
+        employee_id: employeeId,
+        user_id: user.id,
+        date_key: result.data.date_key,
+        status: result.data.status,
+        hours: result.data.hours,
+        location: result.data.location || '',
+      });
+      saveLocalBackup(sectionId, {
+        employees: dataRef.current.employees.map(e =>
+          e.id === employeeId ? { ...e, days: { ...e.days, [dateKey]: entry } } : e
+        ),
+      });
+      toast.warning('Salvato in locale: sincronizzazione automatica appena il server risponde.');
     }
-  }, [user, loadData]);
+  }, [user, sectionId]);
 
   return { data, loading, addEmployee, removeEmployee, updateDayEntry };
 }
