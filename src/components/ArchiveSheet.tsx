@@ -235,6 +235,23 @@ export function ArchiveSheet() {
               <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
             </Button>
           </div>
+
+          <div className="mt-2 flex items-center justify-between gap-2 rounded-md border bg-muted/40 px-2.5 py-2">
+            <p className="text-[11px] leading-snug text-muted-foreground">
+              Backup locale automatico: {localBackupCount} copie salvate sul dispositivo.
+            </p>
+            <Button
+              onClick={() => { downloadLocalBackups(); toast.success('Backup locale scaricato'); }}
+              size="sm"
+              variant="outline"
+              className="h-7 gap-1 px-2 text-[11px]"
+              disabled={localBackupCount === 0}
+            >
+              <Download className="h-3 w-3" /> Backup
+            </Button>
+          </div>
+        </div>
+
         </div>
 
         <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2">
