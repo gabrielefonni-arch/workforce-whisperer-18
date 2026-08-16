@@ -50,6 +50,21 @@ export type Database = {
         }
         Relationships: []
       }
+      cloud_keepalive: {
+        Row: {
+          id: string
+          pinged_at: string
+        }
+        Insert: {
+          id?: string
+          pinged_at?: string
+        }
+        Update: {
+          id?: string
+          pinged_at?: string
+        }
+        Relationships: []
+      }
       day_entries: {
         Row: {
           date_key: string
@@ -204,7 +219,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      cloud_keepalive_ping: { Args: never; Returns: undefined }
     }
     Enums: {
       [_ in never]: never
