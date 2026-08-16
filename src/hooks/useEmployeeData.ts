@@ -5,6 +5,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import type { EmployeeData, DayEntry, Employee } from '@/types/employee';
 import { employeeSchema, dayEntrySchema } from '@/lib/validation';
+import { saveLocalBackup } from '@/lib/localBackup';
+
 
 export function useEmployeeData(sectionId: string) {
   const { user } = useAuth();
