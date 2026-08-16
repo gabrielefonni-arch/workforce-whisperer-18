@@ -7,6 +7,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { MONTHS_IT } from '@/lib/dateUtils';
+import { downloadLocalBackups, listLocalBackups } from '@/lib/localBackup';
+
 
 interface HistoryRow {
   id: string;
