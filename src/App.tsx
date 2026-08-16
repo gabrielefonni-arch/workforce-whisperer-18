@@ -11,6 +11,8 @@ import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import { PWAUpdatePrompt } from "./components/PWAUpdatePrompt";
 import { ExpiredAppointmentsAlert } from "./components/ExpiredAppointmentsAlert";
+import { BackendStatusBanner } from "./components/BackendStatusBanner";
+
 
 const queryClient = new QueryClient();
 
@@ -36,7 +38,9 @@ const App = () => (
           <Toaster />
           <Sonner />
           <PWAUpdatePrompt />
+          <BackendStatusBanner />
           <BrowserRouter>
+
             <Routes>
               <Route path="/auth" element={<AuthRoute />} />
               <Route path="/reset-password" element={<ResetPassword />} />

@@ -5,6 +5,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import type { EmployeeData, DayEntry, Employee } from '@/types/employee';
 import { employeeSchema, dayEntrySchema } from '@/lib/validation';
+import { saveLocalBackup } from '@/lib/localBackup';
+
 
 export function useEmployeeData(sectionId: string) {
   const { user } = useAuth();
@@ -72,6 +74,8 @@ export function useEmployeeData(sectionId: string) {
       }));
 
       setData({ employees });
+      saveLocalBackup(sectionId, { employees });
+
     } catch (err) {
       console.error('Error loading employees:', err);
       toast.error('Errore nel caricamento dati. Riprova.');
