@@ -63,6 +63,8 @@ export function ArchiveSheet() {
   const [expandedMonth, setExpandedMonth] = useState<string | null>(null);
   const [expandedEmp, setExpandedEmp] = useState<string | null>(null);
   const [search, setSearch] = useState('');
+  const localBackupCount = useMemo(() => (open ? listLocalBackups().length : 0), [open]);
+
 
   const load = useCallback(async () => {
     if (!user) return;
