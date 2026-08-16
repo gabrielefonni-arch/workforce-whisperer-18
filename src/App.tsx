@@ -11,6 +11,8 @@ import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import { PWAUpdatePrompt } from "./components/PWAUpdatePrompt";
 import { ExpiredAppointmentsAlert } from "./components/ExpiredAppointmentsAlert";
+import { BackendStatusBanner } from "./components/BackendStatusBanner";
+
 
 const queryClient = new QueryClient();
 
