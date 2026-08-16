@@ -74,6 +74,8 @@ export function useEmployeeData(sectionId: string) {
       }));
 
       setData({ employees });
+      saveLocalBackup(sectionId, { employees });
+
     } catch (err) {
       console.error('Error loading employees:', err);
       toast.error('Errore nel caricamento dati. Riprova.');
