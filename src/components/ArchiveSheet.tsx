@@ -8,6 +8,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { MONTHS_IT } from '@/lib/dateUtils';
 import { downloadLocalBackups, listLocalBackups } from '@/lib/localBackup';
+import { downloadFullExport } from '@/lib/fullExport';
+
 
 
 interface HistoryRow {
