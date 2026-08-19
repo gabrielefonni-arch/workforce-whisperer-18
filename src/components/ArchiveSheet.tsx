@@ -8,6 +8,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { MONTHS_IT } from '@/lib/dateUtils';
 import { downloadLocalBackups, listLocalBackups } from '@/lib/localBackup';
+import { downloadFullExport } from '@/lib/fullExport';
+
 
 
 interface HistoryRow {
@@ -58,7 +60,9 @@ export function ArchiveSheet() {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [rows, setRows] = useState<HistoryRow[]>([]);
+
   const [names, setNames] = useState<Record<string, string>>({});
   const [expandedMonth, setExpandedMonth] = useState<string | null>(null);
   const [expandedEmp, setExpandedEmp] = useState<string | null>(null);
@@ -240,20 +244,49 @@ export function ArchiveSheet() {
             </Button>
           </div>
 
-          <div className="mt-2 flex items-center justify-between gap-2 rounded-md border bg-muted/40 px-2.5 py-2">
-            <p className="text-[11px] leading-snug text-muted-foreground">
-              Backup locale automatico: {localBackupCount} copie salvate sul dispositivo.
-            </p>
-            <Button
-              onClick={() => { downloadLocalBackups(); toast.success('Backup locale scaricato'); }}
-              size="sm"
-              variant="outline"
-              className="h-7 gap-1 px-2 text-[11px]"
-              disabled={localBackupCount === 0}
-            >
-              <Download className="h-3 w-3" /> Backup
-            </Button>
+          <div className="mt-2 space-y-2">
+            <div className="flex items-center justify-between gap-2 rounded-md border bg-muted/40 px-2.5 py-2">
+              <p className="text-[11px] leading-snug text-muted-foreground">
+                Backup locale automatico: {localBackupCount} copie salvate sul dispositivo.
+              </p>
+              <Button
+                onClick={() => { downloadLocalBackups(); toast.success('Backup locale scaricato'); }}
+                size="sm"
+                variant="outline"
+                className="h-7 gap-1 px-2 text-[11px]"
+                disabled={localBackupCount === 0}
+              >
+                <Download className="h-3 w-3" /> Backup
+              </Button>
+            </div>
+
+            <div className="flex items-center justify-between gap-2 rounded-md border bg-muted/40 px-2.5 py-2">
+              <p className="text-[11px] leading-snug text-muted-foreground">
+                Export completo: tutti i dati (dipendenti, giornaliere, storico, appuntamenti) in un unico file.
+              </p>
+              <Button
+                onClick={async () => {
+                  if (!user) return;
+                  setExporting(true);
+                  try {
+                    const res = await downloadFullExport(user.id);
+                    toast.success(`Export completato: ${res.counts.day_entries} giornaliere salvate`);
+                  } catch (e) {
+                    console.error('Errore export completo:', e);
+                    toast.error('Export non riuscito, riprova');
+                  } finally {
+                    setExporting(false);
+                  }
+                }}
+                size="sm"
+                className="h-7 gap-1 px-2 text-[11px]"
+                disabled={exporting}
+              >
+                {exporting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />} Export
+              </Button>
+            </div>
           </div>
+
         </div>
 
 
