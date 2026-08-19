@@ -60,7 +60,9 @@ export function ArchiveSheet() {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [rows, setRows] = useState<HistoryRow[]>([]);
+
   const [names, setNames] = useState<Record<string, string>>({});
   const [expandedMonth, setExpandedMonth] = useState<string | null>(null);
   const [expandedEmp, setExpandedEmp] = useState<string | null>(null);
