@@ -8,7 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { MONTHS_IT } from '@/lib/dateUtils';
 import { downloadLocalBackups, listLocalBackups } from '@/lib/localBackup';
-import { downloadFullExport } from '@/lib/fullExport';
+import { exportFullArchivePdf } from '@/lib/fullExportPdf';
 
 
 
@@ -262,18 +262,22 @@ export function ArchiveSheet() {
 
             <div className="flex items-center justify-between gap-2 rounded-md border bg-muted/40 px-2.5 py-2">
               <p className="text-[11px] leading-snug text-muted-foreground">
-                Export completo: tutti i dati (dipendenti, giornaliere, storico, appuntamenti) in un unico file.
+                Archivio completo in PDF: tutti i mesi, tutti i dipendenti, giorno per giorno.
               </p>
               <Button
                 onClick={async () => {
                   if (!user) return;
                   setExporting(true);
                   try {
-                    const res = await downloadFullExport(user.id);
-                    toast.success(`Export completato: ${res.counts.day_entries} giornaliere salvate`);
+                    const res = await exportFullArchivePdf(user.id);
+                    toast.success(`PDF generato: ${res.entries} registrazioni`);
                   } catch (e) {
-                    console.error('Errore export completo:', e);
-                    toast.error('Export non riuscito, riprova');
+                    console.error('Errore export PDF:', e);
+                    toast.error(
+                      (e as Error)?.message === 'popup-blocked'
+                        ? 'Consenti le finestre popup per generare il PDF'
+                        : 'Export non riuscito, riprova'
+                    );
                   } finally {
                     setExporting(false);
                   }
@@ -282,8 +286,9 @@ export function ArchiveSheet() {
                 className="h-7 gap-1 px-2 text-[11px]"
                 disabled={exporting}
               >
-                {exporting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />} Export
+                {exporting ? <Loader2 className="h-3 w-3 animate-spin" /> : <FileText className="h-3 w-3" />} PDF
               </Button>
+
             </div>
           </div>
 
