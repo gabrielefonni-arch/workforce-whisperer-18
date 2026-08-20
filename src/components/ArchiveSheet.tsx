@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Archive, Download, RefreshCw, Loader2, ChevronRight, ChevronDown, Search, FileText, Users, Calendar } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCompany } from '@/contexts/CompanyContext';
 import { toast } from 'sonner';
 import { MONTHS_IT } from '@/lib/dateUtils';
 import { downloadLocalBackups, listLocalBackups } from '@/lib/localBackup';
@@ -69,6 +70,9 @@ type Grouped = {
 
 export function ArchiveSheet() {
   const { user } = useAuth();
+  const { currentSection } = useCompany();
+  const sectionId = currentSection.id;
+  const sectionName = currentSection.name;
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -88,7 +92,8 @@ export function ArchiveSheet() {
       const { data: emps } = await supabase
         .from('employees')
         .select('id, name')
-        .eq('user_id', user.id);
+        .eq('user_id', user.id)
+        .eq('section_id', sectionId);
       const nameMap: Record<string, string> = {};
       (emps || []).forEach(e => { nameMap[e.id] = e.name; });
       setNames(nameMap);
@@ -109,18 +114,19 @@ export function ArchiveSheet() {
         if (data.length < PAGE) break;
         page++;
       }
-      setRows(all);
+      const allowed = new Set(Object.keys(nameMap));
+      setRows(all.filter(r => allowed.has(r.employee_id)));
     } catch (err) {
       console.error('Errore caricamento archivio:', err);
       toast.error('Errore nel caricamento archivio');
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, sectionId]);
 
   const handleOpenChange = (o: boolean) => {
     setOpen(o);
-    if (o && rows.length === 0) load();
+    if (o) load();
   };
 
   // Group by month → employee, keep only the most recent version per (emp, date_key) within each month
@@ -189,7 +195,7 @@ export function ArchiveSheet() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `archivio-${g.key}.csv`;
+    a.download = `archivio-${sectionId}-${g.key}.csv`;
     a.click();
     URL.revokeObjectURL(url);
     toast.success(`Scaricato ${g.label}`);
@@ -210,7 +216,7 @@ export function ArchiveSheet() {
         <div className="px-5 pt-5 pb-3 border-b">
           <SheetHeader>
             <SheetTitle className="flex items-center gap-2 text-base">
-              <Archive className="h-4 w-4" /> Archivio Storico
+              <Archive className="h-4 w-4" /> Archivio · {sectionName}
             </SheetTitle>
           </SheetHeader>
           <p className="text-xs text-muted-foreground mt-1.5">
@@ -280,7 +286,7 @@ export function ArchiveSheet() {
                   if (!user) return;
                   setExporting(true);
                   try {
-                    const res = await exportFullArchivePdf(user.id);
+                    const res = await exportFullArchivePdf(user.id, { sectionId, sectionName });
                     toast.success(`PDF generato: ${res.entries} giornaliere`);
                   } catch (e) {
                     console.error('Errore export PDF:', e);
