@@ -166,14 +166,17 @@ export async function exportFullArchivePdf(userId: string): Promise<{ entries: n
         <em>${sorted.length} giornate · ${hours.toLocaleString('it-IT')} ore</em>
       </div>
       <table><thead><tr>
-        <th style="width:22%">Data</th><th style="width:24%">Stato</th><th style="width:14%">Ore</th><th>Cantiere</th>
+        <th style="width:8%">Giorno</th><th style="width:14%">Data</th><th style="width:16%">Stato</th>
+        <th style="width:9%">Ore</th><th>Cantiere / Via</th><th style="width:20%">Ultima modifica</th>
       </tr></thead><tbody>`;
       for (const r of sorted) {
         html += `<tr>
+          <td class="d">${escapeHtml(weekday(r.date_key))}</td>
           <td class="d">${escapeHtml(itDate(r.date_key))}</td>
           <td>${escapeHtml(statusLabel(r.status))}</td>
           <td class="n">${r.hours ? escapeHtml(r.hours) : '—'}</td>
           <td>${escapeHtml(r.location || '—')}</td>
+          <td class="d">${escapeHtml(itDateTime(r.updated_at ?? r.created_at))}</td>
         </tr>`;
       }
       html += `</tbody></table></div>`;
