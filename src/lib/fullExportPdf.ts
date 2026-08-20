@@ -52,7 +52,7 @@ const itDate = (key: string) => {
   return `${d}/${m}/${y}`;
 };
 
-interface Employee { id: string; name?: string | null; full_name?: string | null }
+interface Employee { id: string; name?: string | null; full_name?: string | null; section_id?: string | null }
 interface DayEntry {
   employee_id: string;
   date_key: string;
@@ -86,12 +86,22 @@ function statusSummary(rows: DayEntry[]) {
 }
 
 /** Genera un archivio PDF completo: copertina, riepilogo, mese per mese e dipendente per dipendente. */
-export async function exportFullArchivePdf(userId: string): Promise<{ entries: number; employees: number }> {
-  const [employees, entries, history] = await Promise.all([
+export async function exportFullArchivePdf(
+  userId: string,
+  opts?: { sectionId?: string; sectionName?: string },
+): Promise<{ entries: number; employees: number }> {
+  const [allEmployees, allEntries, allHistory] = await Promise.all([
     fetchAll<Employee>('employees', userId),
     fetchAll<DayEntry>('day_entries', userId),
     fetchAll<{ employee_id: string; date_key: string; changed_at: string }>('day_entries_history', userId),
   ]);
+
+  const employees = opts?.sectionId
+    ? allEmployees.filter(e => e.section_id === opts.sectionId)
+    : allEmployees;
+  const allowed = new Set(employees.map(e => e.id));
+  const entries = opts?.sectionId ? allEntries.filter(e => allowed.has(e.employee_id)) : allEntries;
+  const history = opts?.sectionId ? allHistory.filter(h => allowed.has(h.employee_id)) : allHistory;
 
   const empName = new Map(
     employees.map(e => [e.id, (e.name ?? e.full_name ?? 'Senza nome') as string]),
@@ -129,7 +139,7 @@ export async function exportFullArchivePdf(userId: string): Promise<{ entries: n
   };
 
   let html = `<!DOCTYPE html><html lang="it"><head><meta charset="utf-8">
-<title>Archivio completo giornaliere</title>
+<title>Archivio completo giornaliere${opts?.sectionName ? ` — ${escapeHtml(opts.sectionName)}` : ''}</title>
 <style>
   @page { size: A4 portrait; margin: 14mm 12mm; }
   * { box-sizing: border-box; }
@@ -162,8 +172,8 @@ export async function exportFullArchivePdf(userId: string): Promise<{ entries: n
 </style></head><body>`;
 
   html += `<div class="cover">
-    <div class="kicker">Archivio giornaliere</div>
-    <h1>Archivio completo dati</h1>
+    <div class="kicker">Archivio giornaliere${opts?.sectionName ? ` · ${escapeHtml(opts.sectionName)}` : ''}</div>
+    <h1>${escapeHtml(opts?.sectionName ?? 'Archivio completo dati')}</h1>
     <div class="sub">Documento generato automaticamente il ${generated}</div>
     <div class="rule"></div>
     <div class="kpis">
