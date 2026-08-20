@@ -67,16 +67,43 @@ const WEEKDAYS_IT = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
 const weekday = (key: string) => WEEKDAYS_IT[new Date(`${key}T00:00:00`).getDay()] ?? '';
 const itDateTime = (v?: string | null) => (v ? new Date(v).toLocaleString('it-IT') : '—');
 
+const STATUS_ORDER = ['present', 'injury', 'sick', 'holiday'];
+
+function statusCounts(rows: DayEntry[]) {
+  const c: Record<string, number> = {};
+  for (const r of rows) {
+    const k = r.status || '';
+    if (!k) continue;
+    c[k] = (c[k] || 0) + 1;
+  }
+  return c;
+}
+
+function statusSummary(rows: DayEntry[]) {
+  const c = statusCounts(rows);
+  const keys = [...new Set([...STATUS_ORDER.filter(k => c[k]), ...Object.keys(c)])];
+  return keys.map(k => `${statusLabel(k)}: ${c[k]}`).join(' · ');
+}
+
 /** Genera un archivio PDF completo: copertina, riepilogo, mese per mese e dipendente per dipendente. */
 export async function exportFullArchivePdf(userId: string): Promise<{ entries: number; employees: number }> {
-  const [employees, entries] = await Promise.all([
+  const [employees, entries, history] = await Promise.all([
     fetchAll<Employee>('employees', userId),
     fetchAll<DayEntry>('day_entries', userId),
+    fetchAll<{ employee_id: string; date_key: string; changed_at: string }>('day_entries_history', userId),
   ]);
 
   const empName = new Map(
     employees.map(e => [e.id, (e.name ?? e.full_name ?? 'Senza nome') as string]),
   );
+
+  // ultima modifica registrata nello storico per (dipendente, giorno)
+  const lastChange = new Map<string, string>();
+  for (const h of history) {
+    const k = `${h.employee_id}|${h.date_key}`;
+    const prev = lastChange.get(k);
+    if (!prev || h.changed_at > prev) lastChange.set(k, h.changed_at);
+  }
 
   // raggruppa: mese → dipendente → giorni
   const months = new Map<string, Map<string, DayEntry[]>>();
@@ -91,6 +118,8 @@ export async function exportFullArchivePdf(userId: string): Promise<{ entries: n
 
   const monthKeys = [...months.keys()].sort().reverse();
   const totalHours = entries.reduce((s, e) => s + (Number(e.hours) || 0), 0);
+  const globalCounts = statusCounts(entries);
+  const sites = new Set(entries.map(e => (e.location || '').trim()).filter(Boolean));
   const now = new Date();
   const generated = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
