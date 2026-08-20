@@ -59,7 +59,13 @@ interface DayEntry {
   status?: string | null;
   hours?: number | null;
   location?: string | null;
+  updated_at?: string | null;
+  created_at?: string | null;
 }
+
+const WEEKDAYS_IT = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
+const weekday = (key: string) => WEEKDAYS_IT[new Date(`${key}T00:00:00`).getDay()] ?? '';
+const itDateTime = (v?: string | null) => (v ? new Date(v).toLocaleString('it-IT') : '—');
 
 /** Genera un archivio PDF completo: copertina, riepilogo, mese per mese e dipendente per dipendente. */
 export async function exportFullArchivePdf(userId: string): Promise<{ entries: number; employees: number }> {
