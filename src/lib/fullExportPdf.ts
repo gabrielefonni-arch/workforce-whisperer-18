@@ -171,17 +171,27 @@ export async function exportFullArchivePdf(userId: string): Promise<{ entries: n
       <div class="kpi"><span class="v">${monthKeys.length}</span><span class="l">Mesi</span></div>
       <div class="kpi"><span class="v">${totalHours.toLocaleString('it-IT')}</span><span class="l">Ore totali</span></div>
     </div>
+    <div class="kpis" style="margin-top:10px">
+      <div class="kpi"><span class="v">${globalCounts.present || 0}</span><span class="l">Presente</span></div>
+      <div class="kpi"><span class="v">${globalCounts.injury || 0}</span><span class="l">Infortunio</span></div>
+      <div class="kpi"><span class="v">${globalCounts.sick || 0}</span><span class="l">Malattia</span></div>
+      <div class="kpi"><span class="v">${globalCounts.holiday || 0}</span><span class="l">Festivo</span></div>
+      <div class="kpi"><span class="v">${sites.size}</span><span class="l">Cantieri</span></div>
+    </div>
   </div>`;
 
   for (const mKey of monthKeys) {
     const byEmp = months.get(mKey)!;
     const monthEntries = [...byEmp.values()].flat();
     const monthHours = monthEntries.reduce((s, e) => s + (Number(e.hours) || 0), 0);
+    const monthSites = [...new Set(monthEntries.map(e => (e.location || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'it'));
 
     html += `<div class="month"><div class="month-h">
       <h2>${escapeHtml(monthTitle(mKey))}</h2>
       <span>${byEmp.size} dipendenti · ${monthEntries.length} giornate · ${monthHours.toLocaleString('it-IT')} ore</span>
-    </div>`;
+    </div>
+    <div class="meta">Totali stato — ${escapeHtml(statusSummary(monthEntries)) || 'nessuno'}</div>
+    <div class="meta">Cantieri / vie (${monthSites.length}) — ${escapeHtml(monthSites.join(' · ')) || '—'}</div>`;
 
     const sortedEmps = [...byEmp.entries()].sort((a, b) =>
       (empName.get(a[0]) ?? '').localeCompare(empName.get(b[0]) ?? '', 'it'),
@@ -192,7 +202,7 @@ export async function exportFullArchivePdf(userId: string): Promise<{ entries: n
       const hours = sorted.reduce((s, e) => s + (Number(e.hours) || 0), 0);
       html += `<div class="emp"><div class="emp-h">
         <strong>${escapeHtml(empName.get(empId) ?? 'Senza nome')}</strong>
-        <em>${sorted.length} giornate · ${hours.toLocaleString('it-IT')} ore</em>
+        <em>${sorted.length} giornate · ${hours.toLocaleString('it-IT')} ore · ${escapeHtml(statusSummary(sorted))}</em>
       </div>
       <table><thead><tr>
         <th style="width:8%">Giorno</th><th style="width:14%">Data</th><th style="width:16%">Stato</th>
@@ -205,9 +215,10 @@ export async function exportFullArchivePdf(userId: string): Promise<{ entries: n
           <td>${escapeHtml(statusLabel(r.status))}</td>
           <td class="n">${r.hours ? escapeHtml(r.hours) : '—'}</td>
           <td>${escapeHtml(r.location || '—')}</td>
-          <td class="d">${escapeHtml(itDateTime(r.updated_at ?? r.created_at))}</td>
+          <td class="d">${escapeHtml(itDateTime(lastChange.get(`${r.employee_id}|${r.date_key}`)))}</td>
         </tr>`;
       }
+      html += `<tr><td></td><td></td><td style="font-weight:620">Totale</td><td class="n" style="font-weight:620">${hours.toLocaleString('it-IT')}</td><td></td><td></td></tr>`;
       html += `</tbody></table></div>`;
     }
     html += `</div>`;
