@@ -25,7 +25,13 @@ interface HistoryRow {
 
 const STATUS_LABEL: Record<string, string> = {
   '': '—',
+  present: 'Presente',
+  injury: 'Infortunio',
+  sick: 'Malattia',
+  holiday: 'Festivo',
+  // legacy / codici brevi
   P: 'Presente',
+  IMF: 'Infortunio',
   A: 'Assente',
   M: 'Malattia',
   F: 'Ferie',
@@ -34,7 +40,12 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 const STATUS_COLOR: Record<string, string> = {
+  present: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400',
+  injury: 'bg-red-500/15 text-red-700 dark:text-red-400',
+  sick: 'bg-orange-500/15 text-orange-700 dark:text-orange-400',
+  holiday: 'bg-blue-500/15 text-blue-700 dark:text-blue-400',
   P: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400',
+  IMF: 'bg-red-500/15 text-red-700 dark:text-red-400',
   A: 'bg-red-500/15 text-red-700 dark:text-red-400',
   M: 'bg-orange-500/15 text-orange-700 dark:text-orange-400',
   F: 'bg-blue-500/15 text-blue-700 dark:text-blue-400',

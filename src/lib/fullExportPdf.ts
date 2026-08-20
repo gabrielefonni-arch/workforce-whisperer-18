@@ -25,13 +25,18 @@ async function fetchAll<T = Record<string, unknown>>(
 }
 
 const STATUS_LABEL: Record<string, string> = {
+  present: 'Presente',
+  injury: 'Infortunio',
+  sick: 'Malattia',
+  holiday: 'Festivo',
+  // legacy / codici brevi
   P: 'Presente',
+  IMF: 'Infortunio',
   A: 'Assente',
   M: 'Malattia',
   F: 'Ferie',
   PR: 'Permesso',
   FES: 'Festivo',
-  IMF: 'Infortunio',
 };
 
 const statusLabel = (s?: string | null) => (s ? STATUS_LABEL[s] ?? s : '—');
@@ -54,7 +59,13 @@ interface DayEntry {
   status?: string | null;
   hours?: number | null;
   location?: string | null;
+  updated_at?: string | null;
+  created_at?: string | null;
 }
+
+const WEEKDAYS_IT = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
+const weekday = (key: string) => WEEKDAYS_IT[new Date(`${key}T00:00:00`).getDay()] ?? '';
+const itDateTime = (v?: string | null) => (v ? new Date(v).toLocaleString('it-IT') : '—');
 
 /** Genera un archivio PDF completo: copertina, riepilogo, mese per mese e dipendente per dipendente. */
 export async function exportFullArchivePdf(userId: string): Promise<{ entries: number; employees: number }> {
@@ -155,14 +166,17 @@ export async function exportFullArchivePdf(userId: string): Promise<{ entries: n
         <em>${sorted.length} giornate · ${hours.toLocaleString('it-IT')} ore</em>
       </div>
       <table><thead><tr>
-        <th style="width:22%">Data</th><th style="width:24%">Stato</th><th style="width:14%">Ore</th><th>Cantiere</th>
+        <th style="width:8%">Giorno</th><th style="width:14%">Data</th><th style="width:16%">Stato</th>
+        <th style="width:9%">Ore</th><th>Cantiere / Via</th><th style="width:20%">Ultima modifica</th>
       </tr></thead><tbody>`;
       for (const r of sorted) {
         html += `<tr>
+          <td class="d">${escapeHtml(weekday(r.date_key))}</td>
           <td class="d">${escapeHtml(itDate(r.date_key))}</td>
           <td>${escapeHtml(statusLabel(r.status))}</td>
           <td class="n">${r.hours ? escapeHtml(r.hours) : '—'}</td>
           <td>${escapeHtml(r.location || '—')}</td>
+          <td class="d">${escapeHtml(itDateTime(r.updated_at ?? r.created_at))}</td>
         </tr>`;
       }
       html += `</tbody></table></div>`;
