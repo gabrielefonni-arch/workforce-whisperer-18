@@ -13,8 +13,10 @@ interface EntryRow {
 }
 
 const STATUS_LABEL: Record<string, string> = {
-  P: 'Presente', A: 'Assente', M: 'Malattia', F: 'Ferie',
-  PR: 'Permesso', FES: 'Festivo', IMF: 'Infortunio',
+  present: 'Presente',
+  injury: 'Infortunio',
+  sick: 'Malattia',
+  holiday: 'Festivo',
 };
 
 function escapeHtml(text: string): string {
@@ -50,7 +52,6 @@ export async function exportFullArchivePdf(userId: string): Promise<{ entries: n
   const names: Record<string, string> = {};
   employees.forEach(e => { names[e.id] = e.name; });
 
-  // month -> employee -> rows
   const byMonth: Record<string, Record<string, EntryRow[]>> = {};
   for (const r of entries) {
     if (!r.date_key) continue;

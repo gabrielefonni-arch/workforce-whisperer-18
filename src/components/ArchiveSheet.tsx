@@ -8,7 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { MONTHS_IT } from '@/lib/dateUtils';
 import { downloadLocalBackups, listLocalBackups } from '@/lib/localBackup';
-import { exportFullArchivePdf } from '@/lib/fullExportPdf';
+import { downloadFullExport } from '@/lib/fullExport';
 
 
 
@@ -25,22 +25,19 @@ interface HistoryRow {
 
 const STATUS_LABEL: Record<string, string> = {
   '': '—',
-  P: 'Presente',
-  A: 'Assente',
-  M: 'Malattia',
-  F: 'Ferie',
-  PR: 'Permesso',
-  FES: 'Festivo',
+  present: 'Presente',
+  injury: 'Infortunio',
+  sick: 'Malattia',
+  holiday: 'Festivo',
 };
 
 const STATUS_COLOR: Record<string, string> = {
-  P: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400',
-  A: 'bg-red-500/15 text-red-700 dark:text-red-400',
-  M: 'bg-orange-500/15 text-orange-700 dark:text-orange-400',
-  F: 'bg-blue-500/15 text-blue-700 dark:text-blue-400',
-  PR: 'bg-purple-500/15 text-purple-700 dark:text-purple-400',
-  FES: 'bg-slate-500/15 text-slate-700 dark:text-slate-400',
+  present: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400',
+  injury: 'bg-orange-500/15 text-orange-700 dark:text-orange-400',
+  sick: 'bg-red-500/15 text-red-700 dark:text-red-400',
+  holiday: 'bg-blue-500/15 text-blue-700 dark:text-blue-400',
 };
+
 
 type Grouped = {
   key: string; // YYYY-MM
@@ -262,22 +259,18 @@ export function ArchiveSheet() {
 
             <div className="flex items-center justify-between gap-2 rounded-md border bg-muted/40 px-2.5 py-2">
               <p className="text-[11px] leading-snug text-muted-foreground">
-                Archivio completo in PDF: tutti i mesi, tutti i dipendenti, giorno per giorno.
+                Export completo: tutti i dati (dipendenti, giornaliere, storico, appuntamenti) in un unico file.
               </p>
               <Button
                 onClick={async () => {
                   if (!user) return;
                   setExporting(true);
                   try {
-                    const res = await exportFullArchivePdf(user.id);
-                    toast.success(`PDF generato: ${res.entries} registrazioni`);
+                    const res = await downloadFullExport(user.id);
+                    toast.success(`Export completato: ${res.counts.day_entries} giornaliere salvate`);
                   } catch (e) {
-                    console.error('Errore export PDF:', e);
-                    toast.error(
-                      (e as Error)?.message === 'popup-blocked'
-                        ? 'Consenti le finestre popup per generare il PDF'
-                        : 'Export non riuscito, riprova'
-                    );
+                    console.error('Errore export completo:', e);
+                    toast.error('Export non riuscito, riprova');
                   } finally {
                     setExporting(false);
                   }
@@ -286,9 +279,8 @@ export function ArchiveSheet() {
                 className="h-7 gap-1 px-2 text-[11px]"
                 disabled={exporting}
               >
-                {exporting ? <Loader2 className="h-3 w-3 animate-spin" /> : <FileText className="h-3 w-3" />} PDF
+                {exporting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />} Export
               </Button>
-
             </div>
           </div>
 
