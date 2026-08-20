@@ -157,6 +157,7 @@ export async function exportFullArchivePdf(userId: string): Promise<{ entries: n
   td { padding:4px 6px; border-bottom:1px solid #f1f3f5; font-size:10px; vertical-align:top; }
   td.n { text-align:right; font-variant-numeric: tabular-nums; white-space:nowrap; }
   td.d { white-space:nowrap; color:#48505a; }
+  .meta { font-size:9px; color:#6b7480; margin-bottom:6px; line-height:1.5; }
   .footer { position:fixed; bottom:4mm; left:0; right:0; text-align:center; font-size:8px; color:#a2a9b2; }
 </style></head><body>`;
 
