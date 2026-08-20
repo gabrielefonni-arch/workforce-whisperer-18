@@ -4,7 +4,7 @@ import { MONTHS_IT } from '@/lib/dateUtils';
 const PAGE = 1000;
 
 async function fetchAll<T = Record<string, unknown>>(
-  table: 'employees' | 'day_entries',
+  table: 'employees' | 'day_entries' | 'day_entries_history',
   userId: string,
 ): Promise<T[]> {
   let all: T[] = [];
