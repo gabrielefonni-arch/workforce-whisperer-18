@@ -25,13 +25,18 @@ async function fetchAll<T = Record<string, unknown>>(
 }
 
 const STATUS_LABEL: Record<string, string> = {
+  present: 'Presente',
+  injury: 'Infortunio',
+  sick: 'Malattia',
+  holiday: 'Festivo',
+  // legacy / codici brevi
   P: 'Presente',
+  IMF: 'Infortunio',
   A: 'Assente',
   M: 'Malattia',
   F: 'Ferie',
   PR: 'Permesso',
   FES: 'Festivo',
-  IMF: 'Infortunio',
 };
 
 const statusLabel = (s?: string | null) => (s ? STATUS_LABEL[s] ?? s : '—');
