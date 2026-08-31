@@ -26,8 +26,6 @@ const Index = () => {
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
   const [selectedWeekStart, setSelectedWeekStart] = useState<Date | null>(null);
 
-  const isAppointments = currentSection.type === 'appointments';
-
   const handleAddEmployee = () => {
     const name = newName.trim();
     if (!name) {
