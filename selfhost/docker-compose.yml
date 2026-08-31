@@ -1,0 +1,85 @@
+# =====================================================================
+# Infrastruttura indipendente minima: Postgres + Supabase (auth + API).
+# Funziona su qualsiasi VPS (Hetzner, Contabo, DigitalOcean, ecc.)
+#   docker compose up -d
+# Cambia OBBLIGATORIAMENTE le password e i segreti prima dell'uso.
+# =====================================================================
+services:
+  db:
+    image: supabase/postgres:15.8.1.049
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: postgres
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./schema.sql:/docker-entrypoint-initdb.d/99-schema.sql:ro
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 10s
+      retries: 10
+
+  auth:
+    image: supabase/gotrue:v2.174.0
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgres://supabase_auth_admin:${POSTGRES_PASSWORD}@db:5432/postgres
+      GOTRUE_JWT_SECRET: ${JWT_SECRET}
+      GOTRUE_JWT_EXP: 3600
+      GOTRUE_SITE_URL: ${SITE_URL}
+      GOTRUE_DISABLE_SIGNUP: "false"
+      GOTRUE_MAILER_AUTOCONFIRM: "true"
+      API_EXTERNAL_URL: ${API_EXTERNAL_URL}
+      GOTRUE_API_HOST: 0.0.0.0
+      PORT: 9999
+
+  rest:
+    image: postgrest/postgrest:v12.2.3
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGRST_DB_URI: postgres://authenticator:${POSTGRES_PASSWORD}@db:5432/postgres
+      PGRST_DB_SCHEMAS: public
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: ${JWT_SECRET}
+
+  kong:
+    image: kong:2.8.1
+    restart: always
+    depends_on: [auth, rest]
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /kong.yml
+    volumes:
+      - ./kong.yml:/kong.yml:ro
+    ports:
+      - "8000:8000"
+
+  # Backup automatico giornaliero del database su disco locale.
+  backup:
+    image: postgres:15-alpine
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - ./backups:/backups
+    entrypoint: >
+      sh -c "while true; do
+        pg_dump -h db -U postgres postgres > /backups/backup-$$(date +%%Y%%m%%d).sql;
+        find /backups -name 'backup-*.sql' -mtime +30 -delete;
+        sleep 86400;
+      done"
+
+volumes:
+  db-data:
