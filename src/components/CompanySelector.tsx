@@ -1,5 +1,4 @@
 import { useCompany } from '@/contexts/CompanyContext';
-import { Calendar } from 'lucide-react';
 
 export function CompanySelector() {
   const { currentSection, setSection, sections } = useCompany();
@@ -16,7 +15,6 @@ export function CompanySelector() {
               : 'bg-primary-foreground/10 text-primary-foreground/80 hover:bg-primary-foreground/20'
           }`}
         >
-          {s.type === 'appointments' && <Calendar className="h-3 w-3" />}
           {s.name}
         </button>
       ))}

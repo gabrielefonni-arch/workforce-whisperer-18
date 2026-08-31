@@ -3,7 +3,7 @@ import { createContext, useContext, useState, type ReactNode } from 'react';
 export interface AppSection {
   id: string;
   name: string;
-  type: 'company' | 'appointments';
+  type: 'company';
   storageKey: string;
   themeClass: string;
 }
