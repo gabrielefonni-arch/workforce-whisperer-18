@@ -5,7 +5,17 @@ import { componentTagger } from "lovable-tagger";
 import { VitePWA } from "vite-plugin-pwa";
 
 // https://vitejs.dev/config/
+// Backend indipendente (progetto Supabase dell'utente).
+// Sovrascrive le variabili generate automaticamente.
+const SUPABASE_URL = "https://vdfglzacnhtbzvczzpni.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_DH8l6Hu5AaOPYvv0TImEpw_-EXAK2Qy";
+
 export default defineConfig(({ mode }) => ({
+  define: {
+    "import.meta.env.VITE_SUPABASE_URL": JSON.stringify(SUPABASE_URL),
+    "import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY": JSON.stringify(SUPABASE_PUBLISHABLE_KEY),
+    "import.meta.env.VITE_SUPABASE_PROJECT_ID": JSON.stringify("vdfglzacnhtbzvczzpni"),
+  },
   server: {
     host: "::",
     port: 8080,
