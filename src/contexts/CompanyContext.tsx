@@ -3,7 +3,7 @@ import { createContext, useContext, useState, type ReactNode } from 'react';
 export interface AppSection {
   id: string;
   name: string;
-  type: 'company' | 'appointments';
+  type: 'company';
   storageKey: string;
   themeClass: string;
 }
@@ -22,13 +22,6 @@ export const SECTIONS: AppSection[] = [
     type: 'company',
     storageKey: 'edilristrutturazioni_ditta2_data',
     themeClass: 'theme-ditta2',
-  },
-  {
-    id: 'appuntamenti',
-    name: 'Appuntamenti',
-    type: 'appointments',
-    storageKey: 'edilristrutturazioni_appuntamenti',
-    themeClass: 'theme-appuntamenti',
   },
 ];
 

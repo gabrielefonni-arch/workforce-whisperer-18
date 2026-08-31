@@ -31,8 +31,8 @@ export function SettingsSheet() {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant="secondary" size="sm" className="gap-1 text-xs px-2.5">
-          <Settings className="h-3.5 w-3.5" />
+        <Button variant="secondary" size="sm" className="gap-1 text-[11px] px-1.5 sm:px-2 h-7 sm:h-8">
+          <Settings className="h-3 w-3" />
           <span className="hidden sm:inline">Impostazioni</span>
         </Button>
       </SheetTrigger>

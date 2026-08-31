@@ -6,8 +6,6 @@ import { WeekMonthNavigator } from '@/components/WeekMonthNavigator';
 import { EmployeeGrid } from '@/components/EmployeeGrid';
 import { MonthlyTotals } from '@/components/MonthlyTotals';
 import { Legend } from '@/components/Legend';
-import { AppointmentsView } from '@/components/AppointmentsView';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { exportToPDF } from '@/lib/pdfExport';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,8 +25,6 @@ const Index = () => {
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
   const [selectedWeekStart, setSelectedWeekStart] = useState<Date | null>(null);
-
-  const isAppointments = currentSection.type === 'appointments';
 
   const handleAddEmployee = () => {
     const name = newName.trim();
@@ -62,35 +58,33 @@ const Index = () => {
     toast.success('Disconnesso');
   };
 
-  const headerTitle = isAppointments ? 'Appuntamenti' : currentCompany.name;
-  const headerSubtitle = isAppointments ? 'Gestione Appuntamenti' : 'Gestione Dipendenti · Presenze';
+  const headerTitle = currentCompany.name;
+  const headerSubtitle = 'Gestione Dipendenti · Presenze';
 
   return (
     <div className={`min-h-screen bg-background ${currentSection.themeClass}`}>
       <header className="bg-primary text-primary-foreground sticky top-0 z-50 shadow-lg">
-        <div className="max-w-[1600px] mx-auto px-3 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <img src={logoImg} alt="Logo Edilristrutturazioni" className="h-8 w-8 object-contain" />
+        <div className="max-w-[1600px] mx-auto px-2 py-1.5 sm:px-3 sm:py-2 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <img src={logoImg} alt="Logo Edilristrutturazioni" className="h-6 w-6 sm:h-7 sm:w-7 object-contain shrink-0" />
             <div className="min-w-0">
-              <h1 className="text-base font-extrabold tracking-tight leading-tight">{headerTitle}</h1>
-              <p className="text-[10px] opacity-75 font-medium hidden sm:block">{headerSubtitle}</p>
+              <h1 className="text-xs sm:text-sm font-extrabold tracking-tight leading-tight truncate">{headerTitle}</h1>
+              <p className="text-[9px] opacity-75 font-medium hidden sm:block">{headerSubtitle}</p>
             </div>
           </div>
-          <div className="flex gap-1.5">
-            <Button onClick={() => toast.success('Dati salvati correttamente')} variant="secondary" size="sm" className="gap-1 text-xs px-2.5">
-              <Save className="h-3.5 w-3.5" />
+          <div className="flex gap-1 shrink-0">
+            <Button onClick={() => toast.success('Dati salvati correttamente')} variant="secondary" size="sm" className="gap-1 text-[11px] px-1.5 sm:px-2 h-7 sm:h-8">
+              <Save className="h-3 w-3" />
               <span className="hidden sm:inline">Salva</span>
             </Button>
-            {!isAppointments && (
-              <Button onClick={handleExport} variant="secondary" size="sm" className="gap-1 text-xs px-2.5">
-                <Download className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">PDF</span>
-              </Button>
-            )}
+            <Button onClick={handleExport} variant="secondary" size="sm" className="gap-1 text-[11px] px-1.5 sm:px-2 h-7 sm:h-8">
+              <Download className="h-3 w-3" />
+              <span className="hidden sm:inline">PDF</span>
+            </Button>
             <ArchiveSheet />
             <SettingsSheet />
-            <Button onClick={handleSignOut} variant="secondary" size="sm" className="gap-1 text-xs px-2.5">
-              <LogOut className="h-3.5 w-3.5" />
+            <Button onClick={handleSignOut} variant="secondary" size="sm" className="gap-1 text-[11px] px-1.5 sm:px-2 h-7 sm:h-8">
+              <LogOut className="h-3 w-3" />
               <span className="hidden sm:inline">Esci</span>
             </Button>
           </div>
@@ -101,11 +95,7 @@ const Index = () => {
       </header>
 
       <main className="max-w-[1600px] mx-auto px-3 py-4 space-y-4">
-        {isAppointments ? (
-          <ErrorBoundary>
-            <AppointmentsView />
-          </ErrorBoundary>
-        ) : (
+        {(
           <>
             <div className="flex gap-2 items-end">
               <div className="flex-1">
