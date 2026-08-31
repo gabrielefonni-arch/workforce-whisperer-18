@@ -95,11 +95,7 @@ const Index = () => {
       </header>
 
       <main className="max-w-[1600px] mx-auto px-3 py-4 space-y-4">
-        {isAppointments ? (
-          <ErrorBoundary>
-            <AppointmentsView />
-          </ErrorBoundary>
-        ) : (
+        {(
           <>
             <div className="flex gap-2 items-end">
               <div className="flex-1">
