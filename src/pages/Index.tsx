@@ -6,8 +6,6 @@ import { WeekMonthNavigator } from '@/components/WeekMonthNavigator';
 import { EmployeeGrid } from '@/components/EmployeeGrid';
 import { MonthlyTotals } from '@/components/MonthlyTotals';
 import { Legend } from '@/components/Legend';
-import { AppointmentsView } from '@/components/AppointmentsView';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { exportToPDF } from '@/lib/pdfExport';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -62,8 +60,8 @@ const Index = () => {
     toast.success('Disconnesso');
   };
 
-  const headerTitle = isAppointments ? 'Appuntamenti' : currentCompany.name;
-  const headerSubtitle = isAppointments ? 'Gestione Appuntamenti' : 'Gestione Dipendenti · Presenze';
+  const headerTitle = currentCompany.name;
+  const headerSubtitle = 'Gestione Dipendenti · Presenze';
 
   return (
     <div className={`min-h-screen bg-background ${currentSection.themeClass}`}>
