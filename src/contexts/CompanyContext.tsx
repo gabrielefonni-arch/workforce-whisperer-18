@@ -23,13 +23,6 @@ export const SECTIONS: AppSection[] = [
     storageKey: 'edilristrutturazioni_ditta2_data',
     themeClass: 'theme-ditta2',
   },
-  {
-    id: 'appuntamenti',
-    name: 'Appuntamenti',
-    type: 'appointments',
-    storageKey: 'edilristrutturazioni_appuntamenti',
-    themeClass: 'theme-appuntamenti',
-  },
 ];
 
 interface SectionContextValue {

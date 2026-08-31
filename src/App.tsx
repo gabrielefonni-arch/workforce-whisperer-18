@@ -10,7 +10,6 @@ import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import { PWAUpdatePrompt } from "./components/PWAUpdatePrompt";
-import { ExpiredAppointmentsAlert } from "./components/ExpiredAppointmentsAlert";
 import { BackendStatusBanner } from "./components/BackendStatusBanner";
 
 
@@ -44,7 +43,7 @@ const App = () => (
             <Routes>
               <Route path="/auth" element={<AuthRoute />} />
               <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="/" element={<ProtectedRoute><ExpiredAppointmentsAlert><Index /></ExpiredAppointmentsAlert></ProtectedRoute>} />
+              <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
