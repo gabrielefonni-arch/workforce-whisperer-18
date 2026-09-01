@@ -60,8 +60,13 @@ export default function Auth() {
     setLoading(true);
     try {
       if (mode === 'login') {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (!navigator.onLine && offlineAvailable) {
+          await tryOfflineLogin();
+          return;
+        }
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        if (data.user) await saveOfflineCredential(data.user.id, email, password);
         toast.success('Accesso effettuato!');
       } else {
         if (password.length < 6) {
@@ -69,16 +74,29 @@ export default function Auth() {
           setLoading(false);
           return;
         }
-        const { error } = await supabase.auth.signUp({ email, password });
+        const { data, error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
+        if (data.user) await saveOfflineCredential(data.user.id, email, password);
         toast.success('Account creato! Accesso effettuato.');
       }
     } catch (err: any) {
-      toast.error(err.message || 'Errore di autenticazione');
+      const networkIssue =
+        !navigator.onLine ||
+        /failed to fetch|network|networkerror|load failed|timeout/i.test(err?.message || '');
+      if (mode === 'login' && networkIssue && offlineAvailable) {
+        const ok = await tryOfflineLogin(true);
+        if (ok) return;
+      }
+      toast.error(
+        networkIssue
+          ? 'Server non raggiungibile. Controlla la rete o usa l\'accesso offline.'
+          : err.message || 'Errore di autenticazione',
+      );
     } finally {
       setLoading(false);
     }
   };
+
 
   const title = mode === 'forgot' ? 'Recupera Password' : mode === 'login' ? 'Accedi al tuo account' : 'Crea un nuovo account';
 
