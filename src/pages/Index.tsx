@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useEmployeeData } from '@/hooks/useEmployeeData';
 import { useCompany } from '@/contexts/CompanyContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -8,7 +8,7 @@ import { MonthlyTotals } from '@/components/MonthlyTotals';
 import { Legend } from '@/components/Legend';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { UserPlus, Download, Trash2, LogOut, Save } from 'lucide-react';
+import { UserPlus, Download, Trash2, LogOut, Save, Search, X } from 'lucide-react';
 import logoImg from '@/assets/logo.png';
 import { toast } from 'sonner';
 import { CompanySelector } from '@/components/CompanySelector';
@@ -20,10 +20,21 @@ const Index = () => {
   const { signOut } = useAuth();
   const { data, addEmployee, removeEmployee, updateDayEntry } = useEmployeeData(currentSection.id);
   const [newName, setNewName] = useState('');
+  const [search, setSearch] = useState('');
   const now = new Date();
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
   const [selectedWeekStart, setSelectedWeekStart] = useState<Date | null>(null);
+
+  const query = search.trim().toLowerCase();
+  const visibleEmployees = useMemo(() => {
+    if (!query) return data.employees;
+    return data.employees.filter(emp => {
+      if (emp.name.toLowerCase().includes(query)) return true;
+      return Object.values(emp.days).some(d => (d.location || '').toLowerCase().includes(query));
+    });
+  }, [data.employees, query]);
+
 
   const handleAddEmployee = () => {
     const name = newName.trim();
@@ -115,11 +126,38 @@ const Index = () => {
               </Button>
             </div>
 
+            <div className="relative">
+              <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+              <Input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Cerca dipendente o cantiere…"
+                className="h-9 text-sm pl-8 pr-8"
+              />
+              {search && (
+                <button
+                  onClick={() => setSearch('')}
+                  aria-label="Cancella ricerca"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+
+            {query && (
+              <p className="text-xs text-muted-foreground -mt-2">
+                {visibleEmployees.length === 0
+                  ? 'Nessun risultato per la ricerca'
+                  : `${visibleEmployees.length} di ${data.employees.length} dipendenti`}
+              </p>
+            )}
+
             <Legend />
 
-            {data.employees.length > 0 && (
+            {visibleEmployees.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
-                {data.employees.map(emp => (
+                {visibleEmployees.map(emp => (
                   <div key={emp.id} className="flex items-center gap-1 bg-secondary rounded-full px-2.5 py-1 text-xs">
                     <span className="font-medium">{emp.name}</span>
                     <button
@@ -142,7 +180,7 @@ const Index = () => {
             />
 
             <EmployeeGrid
-              employees={data.employees}
+              employees={visibleEmployees}
               selectedYear={selectedYear}
               selectedMonth={selectedMonth}
               selectedWeekStart={selectedWeekStart}
@@ -150,16 +188,17 @@ const Index = () => {
               onUpdateDay={updateDayEntry}
             />
 
-            {data.employees.length > 0 && (
+            {visibleEmployees.length > 0 && (
               <div>
                 <h2 className="text-sm font-bold mb-2">Riepilogo Mensile</h2>
                 <MonthlyTotals
-                  employees={data.employees}
+                  employees={visibleEmployees}
                   year={selectedYear}
                   month={selectedMonth}
                 />
               </div>
             )}
+
           </>
         )}
 
