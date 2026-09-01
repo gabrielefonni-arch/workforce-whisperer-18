@@ -25,9 +25,20 @@ export function useEmployeeData(sectionId: string) {
     if (!user || loadingRef.current) return;
     loadingRef.current = true;
     setLoading(true);
+
+    // Offline: serve the local snapshot immediately, no network wait
+    if (isOffline()) {
+      const snapshot = latestLocalBackup(sectionId);
+      if (snapshot?.data?.employees) setData(snapshot.data);
+      setLoading(false);
+      loadingRef.current = false;
+      return;
+    }
+
     try {
       // 1. Fetch employees for this section
       const { data: emps, error: empsError } = await supabase
+
         .from('employees')
         .select('id, name')
         .eq('section_id', sectionId)
