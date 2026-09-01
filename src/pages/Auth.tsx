@@ -4,15 +4,31 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import logoImg from '@/assets/logo.png';
-import { LogIn, UserPlus, KeyRound } from 'lucide-react';
+import { LogIn, UserPlus, KeyRound, WifiOff } from 'lucide-react';
+import { saveOfflineCredential, offlineSignIn, hasOfflineCredential } from '@/lib/offlineAuth';
+import { useAuth } from '@/contexts/AuthContext';
 
 type Mode = 'login' | 'register' | 'forgot';
 
 export default function Auth() {
+  const { refreshOfflineUnlock } = useAuth();
   const [mode, setMode] = useState<Mode>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const offlineAvailable = hasOfflineCredential();
+
+  const tryOfflineLogin = async (silent = false) => {
+    const ok = await offlineSignIn(email, password);
+    if (ok) {
+      refreshOfflineUnlock();
+      toast.success('Accesso offline: stai vedendo i dati salvati sul dispositivo.');
+      return true;
+    }
+    if (!silent) toast.error('Credenziali offline non valide per questo dispositivo.');
+    return false;
+  };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
