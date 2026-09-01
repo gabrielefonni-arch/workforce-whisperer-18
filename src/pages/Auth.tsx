@@ -138,7 +138,24 @@ export default function Auth() {
             {mode === 'forgot' ? <KeyRound className="h-4 w-4" /> : mode === 'login' ? <LogIn className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
             {loading ? 'Caricamento...' : mode === 'forgot' ? 'Invia email di recupero' : mode === 'login' ? 'Accedi' : 'Registrati'}
           </Button>
+          {mode === 'login' && offlineAvailable && (
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full gap-2"
+              disabled={loading || !email.trim() || !password.trim()}
+              onClick={async () => {
+                setLoading(true);
+                await tryOfflineLogin();
+                setLoading(false);
+              }}
+            >
+              <WifiOff className="h-4 w-4" />
+              Accesso offline
+            </Button>
+          )}
         </form>
+
 
         <div className="text-center space-y-1">
           {mode === 'login' && (
