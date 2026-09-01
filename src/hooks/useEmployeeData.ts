@@ -114,9 +114,11 @@ export function useEmployeeData(sectionId: string) {
   }, [user, sectionId]);
 
   useEffect(() => {
-    setData({ employees: [] });
+    // Show the cached section immediately instead of an empty screen
+    setData(latestLocalBackup(sectionId)?.data || { employees: [] });
     loadData();
-  }, [loadData]);
+  }, [loadData, sectionId]);
+
 
   // Sync any writes queued while the backend was unreachable
   useEffect(() => {
