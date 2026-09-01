@@ -141,6 +141,21 @@ export function useEmployeeData(sectionId: string) {
       toast.error(result.error.errors.map(e => e.message).join(', '));
       return;
     }
+
+    const commitLocal = (id: string) => {
+      const employees = [...dataRef.current.employees, { id, name: result.data.name, days: {} }];
+      setData({ employees });
+      saveLocalBackup(sectionId, { employees });
+    };
+
+    if (isOffline()) {
+      const id = crypto.randomUUID();
+      enqueueEmployeeOp({ op: 'insert', id, name: result.data.name, section_id: sectionId, user_id: user.id });
+      commitLocal(id);
+      toast.warning('Offline: dipendente salvato in locale, sincronizzazione automatica al ritorno della rete.');
+      return;
+    }
+
     const { data: emp, error } = await supabase
       .from('employees')
       .insert({ name: result.data.name, section_id: sectionId, user_id: user.id })
@@ -149,23 +164,41 @@ export function useEmployeeData(sectionId: string) {
 
     if (error) {
       console.error(error);
-      toast.error('Errore durante l\'aggiunta del dipendente');
+      const id = crypto.randomUUID();
+      enqueueEmployeeOp({ op: 'insert', id, name: result.data.name, section_id: sectionId, user_id: user.id });
+      commitLocal(id);
+      toast.warning('Server non raggiungibile: dipendente salvato in locale e sincronizzato appena possibile.');
       return;
     }
-    setData(prev => ({
-      employees: [...prev.employees, { id: emp.id, name: emp.name, days: {} }],
-    }));
+    commitLocal(emp.id);
   }, [user, sectionId]);
 
   const removeEmployee = useCallback(async (id: string) => {
+    if (!user) return;
+
+    const commitLocal = () => {
+      const employees = dataRef.current.employees.filter(e => e.id !== id);
+      setData({ employees });
+      saveLocalBackup(sectionId, { employees });
+    };
+
+    if (isOffline()) {
+      enqueueEmployeeOp({ op: 'delete', id, user_id: user.id });
+      commitLocal();
+      toast.warning('Offline: rimozione salvata in locale e sincronizzata al ritorno della rete.');
+      return;
+    }
+
     const { error } = await supabase.from('employees').delete().eq('id', id);
     if (error) {
       console.error(error);
-      toast.error('Errore durante la rimozione del dipendente');
+      enqueueEmployeeOp({ op: 'delete', id, user_id: user.id });
+      commitLocal();
+      toast.warning('Server non raggiungibile: rimozione salvata in locale.');
       return;
     }
-    setData(prev => ({ employees: prev.employees.filter(e => e.id !== id) }));
-  }, []);
+    commitLocal();
+  }, [user, sectionId]);
 
   const updateDayEntry = useCallback(async (employeeId: string, dateKey: string, entry: DayEntry) => {
     if (!user) return;
@@ -185,36 +218,50 @@ export function useEmployeeData(sectionId: string) {
       ),
     }));
 
-    const { error } = await supabase
-      .from('day_entries')
-      .upsert({
-        employee_id: employeeId,
-        user_id: user.id,
-        date_key: result.data.date_key,
-        status: result.data.status,
-        hours: result.data.hours,
-        location: result.data.location || '',
-      }, { onConflict: 'employee_id,date_key' });
+    const row = {
+      employee_id: employeeId,
+      user_id: user.id,
+      date_key: result.data.date_key,
+      status: result.data.status,
+      hours: result.data.hours,
+      location: result.data.location || '',
+    };
 
-    if (error) {
-      console.error(error);
-      // Never lose data: keep the optimistic value and queue the write locally
-      enqueueWrite({
-        employee_id: employeeId,
-        user_id: user.id,
-        date_key: result.data.date_key,
-        status: result.data.status,
-        hours: result.data.hours,
-        location: result.data.location || '',
-      });
+    const saveLocally = (message: string) => {
+      enqueueWrite(row);
       saveLocalBackup(sectionId, {
         employees: dataRef.current.employees.map(e =>
           e.id === employeeId ? { ...e, days: { ...e.days, [dateKey]: entry } } : e
         ),
       });
-      toast.warning('Salvato in locale: sincronizzazione automatica appena il server risponde.');
+      toast.warning(message);
+    };
+
+    // Offline: skip the network round-trip entirely, save straight to the local queue
+    if (isOffline()) {
+      saveLocally('Offline: dato salvato sul dispositivo, sincronizzazione automatica al ritorno della rete.');
+      return;
     }
+
+    const { error } = await supabase
+      .from('day_entries')
+      .upsert(row, { onConflict: 'employee_id,date_key' });
+
+    if (error) {
+      console.error(error);
+      // Never lose data: keep the optimistic value and queue the write locally
+      saveLocally('Salvato in locale: sincronizzazione automatica appena il server risponde.');
+      return;
+    }
+
+    // Keep the local snapshot in sync so offline reads stay current
+    saveLocalBackup(sectionId, {
+      employees: dataRef.current.employees.map(e =>
+        e.id === employeeId ? { ...e, days: { ...e.days, [dateKey]: entry } } : e
+      ),
+    });
   }, [user, sectionId]);
+
 
   return { data, loading, addEmployee, removeEmployee, updateDayEntry };
 }
