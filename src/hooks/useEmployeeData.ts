@@ -6,7 +6,10 @@ import { toast } from 'sonner';
 import type { EmployeeData, DayEntry, Employee } from '@/types/employee';
 import { employeeSchema, dayEntrySchema } from '@/lib/validation';
 import { saveLocalBackup, latestLocalBackup } from '@/lib/localBackup';
-import { enqueueWrite, flushQueue, pendingCount } from '@/lib/offlineQueue';
+import { enqueueWrite, enqueueEmployeeOp, flushQueue, pendingCount } from '@/lib/offlineQueue';
+
+const isOffline = () => typeof navigator !== 'undefined' && navigator.onLine === false;
+
 
 
 export function useEmployeeData(sectionId: string) {
