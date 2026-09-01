@@ -1,5 +1,4 @@
 import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react-swc";
 import path from "path";
 
 // Config dedicata alla build dell'app desktop (Electron).
@@ -14,7 +13,7 @@ export default defineConfig({
     "import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY": JSON.stringify(SUPABASE_PUBLISHABLE_KEY),
     "import.meta.env.VITE_SUPABASE_PROJECT_ID": JSON.stringify("vdfglzacnhtbzvczzpni"),
   },
-  plugins: [react()],
+  esbuild: { jsx: "automatic" },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
