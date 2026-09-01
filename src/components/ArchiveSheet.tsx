@@ -9,7 +9,6 @@ import { useCompany } from '@/contexts/CompanyContext';
 import { toast } from 'sonner';
 import { MONTHS_IT } from '@/lib/dateUtils';
 import { downloadLocalBackups, listLocalBackups } from '@/lib/localBackup';
-import { exportFullArchivePdf } from '@/lib/fullExportPdf';
 
 
 
@@ -286,6 +285,7 @@ export function ArchiveSheet() {
                   if (!user) return;
                   setExporting(true);
                   try {
+                    const { exportFullArchivePdf } = await import('@/lib/fullExportPdf');
                     const res = await exportFullArchivePdf(user.id, { sectionId, sectionName });
                     toast.success(`PDF generato: ${res.entries} giornaliere`);
                   } catch (e) {

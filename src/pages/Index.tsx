@@ -6,7 +6,6 @@ import { WeekMonthNavigator } from '@/components/WeekMonthNavigator';
 import { EmployeeGrid } from '@/components/EmployeeGrid';
 import { MonthlyTotals } from '@/components/MonthlyTotals';
 import { Legend } from '@/components/Legend';
-import { exportToPDF } from '@/lib/pdfExport';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { UserPlus, Download, Trash2, LogOut, Save } from 'lucide-react';
@@ -44,11 +43,13 @@ const Index = () => {
     }
   };
 
-  const handleExport = () => {
+  const handleExport = async () => {
     if (data.employees.length === 0) {
       toast.error('Nessun dipendente da esportare');
       return;
     }
+    // Loaded on demand so the PDF code never slows down the initial app start
+    const { exportToPDF } = await import('@/lib/pdfExport');
     exportToPDF(data.employees, selectedYear, selectedMonth, currentCompany.name, currentCompany.id);
     toast.success('PDF scaricato con successo');
   };
