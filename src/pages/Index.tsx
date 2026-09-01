@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useEmployeeData } from '@/hooks/useEmployeeData';
 import { useCompany } from '@/contexts/CompanyContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -8,7 +8,7 @@ import { MonthlyTotals } from '@/components/MonthlyTotals';
 import { Legend } from '@/components/Legend';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { UserPlus, Download, Trash2, LogOut, Save } from 'lucide-react';
+import { UserPlus, Download, Trash2, LogOut, Save, Search, X } from 'lucide-react';
 import logoImg from '@/assets/logo.png';
 import { toast } from 'sonner';
 import { CompanySelector } from '@/components/CompanySelector';
@@ -20,10 +20,21 @@ const Index = () => {
   const { signOut } = useAuth();
   const { data, addEmployee, removeEmployee, updateDayEntry } = useEmployeeData(currentSection.id);
   const [newName, setNewName] = useState('');
+  const [search, setSearch] = useState('');
   const now = new Date();
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
   const [selectedWeekStart, setSelectedWeekStart] = useState<Date | null>(null);
+
+  const query = search.trim().toLowerCase();
+  const visibleEmployees = useMemo(() => {
+    if (!query) return data.employees;
+    return data.employees.filter(emp => {
+      if (emp.name.toLowerCase().includes(query)) return true;
+      return Object.values(emp.days).some(d => (d.location || '').toLowerCase().includes(query));
+    });
+  }, [data.employees, query]);
+
 
   const handleAddEmployee = () => {
     const name = newName.trim();
