@@ -126,11 +126,38 @@ const Index = () => {
               </Button>
             </div>
 
+            <div className="relative">
+              <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+              <Input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Cerca dipendente o cantiere…"
+                className="h-9 text-sm pl-8 pr-8"
+              />
+              {search && (
+                <button
+                  onClick={() => setSearch('')}
+                  aria-label="Cancella ricerca"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+
+            {query && (
+              <p className="text-xs text-muted-foreground -mt-2">
+                {visibleEmployees.length === 0
+                  ? 'Nessun risultato per la ricerca'
+                  : `${visibleEmployees.length} di ${data.employees.length} dipendenti`}
+              </p>
+            )}
+
             <Legend />
 
-            {data.employees.length > 0 && (
+            {visibleEmployees.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
-                {data.employees.map(emp => (
+                {visibleEmployees.map(emp => (
                   <div key={emp.id} className="flex items-center gap-1 bg-secondary rounded-full px-2.5 py-1 text-xs">
                     <span className="font-medium">{emp.name}</span>
                     <button
@@ -153,7 +180,7 @@ const Index = () => {
             />
 
             <EmployeeGrid
-              employees={data.employees}
+              employees={visibleEmployees}
               selectedYear={selectedYear}
               selectedMonth={selectedMonth}
               selectedWeekStart={selectedWeekStart}
@@ -161,16 +188,17 @@ const Index = () => {
               onUpdateDay={updateDayEntry}
             />
 
-            {data.employees.length > 0 && (
+            {visibleEmployees.length > 0 && (
               <div>
                 <h2 className="text-sm font-bold mb-2">Riepilogo Mensile</h2>
                 <MonthlyTotals
-                  employees={data.employees}
+                  employees={visibleEmployees}
                   year={selectedYear}
                   month={selectedMonth}
                 />
               </div>
             )}
+
           </>
         )}
 
