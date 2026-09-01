@@ -15,6 +15,9 @@ import { BackendStatusBanner } from "./components/BackendStatusBanner";
 
 const queryClient = new QueryClient();
 
+// In app desktop (Electron) le pagine sono caricate da file:// → serve HashRouter
+const Router = typeof window !== "undefined" && window.location.protocol === "file:" ? HashRouter : BrowserRouter;
+
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   if (loading) return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Caricamento...</div>;
