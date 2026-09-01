@@ -14,12 +14,16 @@ const isOffline = () => typeof navigator !== 'undefined' && navigator.onLine ===
 
 export function useEmployeeData(sectionId: string) {
   const { user } = useAuth();
-  const [data, setData] = useState<EmployeeData>({ employees: [] });
+  // Instant first paint: hydrate from the local snapshot, then refresh from the server
+  const [data, setData] = useState<EmployeeData>(
+    () => latestLocalBackup(sectionId)?.data || { employees: [] }
+  );
   const [loading, setLoading] = useState(true);
   // Prevent duplicate concurrent loads
   const loadingRef = useRef(false);
   const dataRef = useRef(data);
   dataRef.current = data;
+
 
   const loadData = useCallback(async () => {
     if (!user || loadingRef.current) return;
