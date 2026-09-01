@@ -41,7 +41,7 @@ const App = () => (
           <Sonner />
           <PWAUpdatePrompt />
           <BackendStatusBanner />
-          <BrowserRouter>
+          <Router>
 
             <Routes>
               <Route path="/auth" element={<AuthRoute />} />
@@ -49,7 +49,7 @@ const App = () => (
               <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
-          </BrowserRouter>
+          </Router>
         </TooltipProvider>
       </CompanyProvider>
     </AuthProvider>
