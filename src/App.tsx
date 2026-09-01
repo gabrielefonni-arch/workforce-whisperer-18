@@ -1,4 +1,4 @@
-import { Toaster } from "@/components/ui/toaster";
+import { lazy, Suspense } from "react";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -7,8 +7,8 @@ import { CompanyProvider } from "@/contexts/CompanyContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
-import ResetPassword from "./pages/ResetPassword";
-import NotFound from "./pages/NotFound";
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 import { PWAUpdatePrompt } from "./components/PWAUpdatePrompt";
 import { BackendStatusBanner } from "./components/BackendStatusBanner";
 
@@ -37,18 +37,19 @@ const App = () => (
     <AuthProvider>
       <CompanyProvider>
         <TooltipProvider>
-          <Toaster />
           <Sonner />
           <PWAUpdatePrompt />
           <BackendStatusBanner />
           <Router>
 
+            <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-muted-foreground">Caricamento...</div>}>
             <Routes>
               <Route path="/auth" element={<AuthRoute />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </Suspense>
           </Router>
         </TooltipProvider>
       </CompanyProvider>
