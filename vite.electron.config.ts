@@ -23,5 +23,8 @@ export default defineConfig({
   build: {
     outDir: "dist-electron",
     emptyOutDir: true,
+    rollupOptions: {
+      input: path.resolve(__dirname, "index.electron.html"),
+    },
   },
 });
