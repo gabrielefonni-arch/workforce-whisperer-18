@@ -14,28 +14,48 @@ export default function ResetPassword() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // 1) If the session already exists (token already consumed), allow reset
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) setReady(true);
-    });
+    let cancelled = false;
 
-    // 2) Listen for the PASSWORD_RECOVERY event from the auth system
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') {
-        setReady(true);
-      }
+      if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') setReady(true);
     });
 
-    // 3) Also check URL hash/query as fallback (for direct link access)
-    const hash = window.location.hash;
-    const search = window.location.search;
-    const combined = `${search}${hash}`;
-    if (combined.includes('type=recovery') || combined.includes('access_token') || combined.includes('refresh_token')) {
-      setReady(true);
-    }
+    const init = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
 
-    return () => subscription.unsubscribe();
+      // Nuovo formato PKCE: ?code=...
+      const code = params.get('code');
+      if (code) {
+        const { error } = await supabase.auth.exchangeCodeForSession(code);
+        if (!error && !cancelled) { setReady(true); return; }
+      }
+
+      // Formato token_hash: ?token_hash=...&type=recovery
+      const tokenHash = params.get('token_hash') || params.get('token');
+      if (tokenHash) {
+        const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type: 'recovery' });
+        if (!error && !cancelled) { setReady(true); return; }
+      }
+
+      // Formato classico con token nell'hash
+      const accessToken = hashParams.get('access_token');
+      const refreshToken = hashParams.get('refresh_token');
+      if (accessToken && refreshToken) {
+        const { error } = await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+        if (!error && !cancelled) { setReady(true); return; }
+      }
+
+      // Sessione già attiva
+      const { data } = await supabase.auth.getSession();
+      if (data.session && !cancelled) setReady(true);
+    };
+
+    init();
+
+    return () => { cancelled = true; subscription.unsubscribe(); };
   }, []);
+
 
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
