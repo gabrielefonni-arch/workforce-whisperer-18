@@ -1,4 +1,4 @@
-import { useState, memo, useCallback, useId } from 'react';
+import { useState, memo, useCallback, useId, useMemo } from 'react';
 import type { Employee, DayEntry, DayStatus } from '@/types/employee';
 import { getDaysInMonth, getWeeksInMonth, dateKey, isWeekend } from '@/lib/dateUtils';
 import { format } from 'date-fns';
