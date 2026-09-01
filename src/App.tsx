@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import { CompanyProvider } from "@/contexts/CompanyContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
@@ -14,6 +14,9 @@ import { BackendStatusBanner } from "./components/BackendStatusBanner";
 
 
 const queryClient = new QueryClient();
+
+// In app desktop (Electron) le pagine sono caricate da file:// → serve HashRouter
+const Router = typeof window !== "undefined" && window.location.protocol === "file:" ? HashRouter : BrowserRouter;
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -38,7 +41,7 @@ const App = () => (
           <Sonner />
           <PWAUpdatePrompt />
           <BackendStatusBanner />
-          <BrowserRouter>
+          <Router>
 
             <Routes>
               <Route path="/auth" element={<AuthRoute />} />
@@ -46,7 +49,7 @@ const App = () => (
               <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
-          </BrowserRouter>
+          </Router>
         </TooltipProvider>
       </CompanyProvider>
     </AuthProvider>
