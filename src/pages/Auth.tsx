@@ -4,15 +4,31 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import logoImg from '@/assets/logo.png';
-import { LogIn, UserPlus, KeyRound } from 'lucide-react';
+import { LogIn, UserPlus, KeyRound, WifiOff } from 'lucide-react';
+import { saveOfflineCredential, offlineSignIn, hasOfflineCredential } from '@/lib/offlineAuth';
+import { useAuth } from '@/contexts/AuthContext';
 
 type Mode = 'login' | 'register' | 'forgot';
 
 export default function Auth() {
+  const { refreshOfflineUnlock } = useAuth();
   const [mode, setMode] = useState<Mode>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const offlineAvailable = hasOfflineCredential();
+
+  const tryOfflineLogin = async (silent = false) => {
+    const ok = await offlineSignIn(email, password);
+    if (ok) {
+      refreshOfflineUnlock();
+      toast.success('Accesso offline: stai vedendo i dati salvati sul dispositivo.');
+      return true;
+    }
+    if (!silent) toast.error('Credenziali offline non valide per questo dispositivo.');
+    return false;
+  };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,8 +60,13 @@ export default function Auth() {
     setLoading(true);
     try {
       if (mode === 'login') {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (!navigator.onLine && offlineAvailable) {
+          await tryOfflineLogin();
+          return;
+        }
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        if (data.user) await saveOfflineCredential(data.user.id, email, password);
         toast.success('Accesso effettuato!');
       } else {
         if (password.length < 6) {
@@ -53,16 +74,29 @@ export default function Auth() {
           setLoading(false);
           return;
         }
-        const { error } = await supabase.auth.signUp({ email, password });
+        const { data, error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
+        if (data.user) await saveOfflineCredential(data.user.id, email, password);
         toast.success('Account creato! Accesso effettuato.');
       }
     } catch (err: any) {
-      toast.error(err.message || 'Errore di autenticazione');
+      const networkIssue =
+        !navigator.onLine ||
+        /failed to fetch|network|networkerror|load failed|timeout/i.test(err?.message || '');
+      if (mode === 'login' && networkIssue && offlineAvailable) {
+        const ok = await tryOfflineLogin(true);
+        if (ok) return;
+      }
+      toast.error(
+        networkIssue
+          ? 'Server non raggiungibile. Controlla la rete o usa l\'accesso offline.'
+          : err.message || 'Errore di autenticazione',
+      );
     } finally {
       setLoading(false);
     }
   };
+
 
   const title = mode === 'forgot' ? 'Recupera Password' : mode === 'login' ? 'Accedi al tuo account' : 'Crea un nuovo account';
 
@@ -104,7 +138,24 @@ export default function Auth() {
             {mode === 'forgot' ? <KeyRound className="h-4 w-4" /> : mode === 'login' ? <LogIn className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
             {loading ? 'Caricamento...' : mode === 'forgot' ? 'Invia email di recupero' : mode === 'login' ? 'Accedi' : 'Registrati'}
           </Button>
+          {mode === 'login' && offlineAvailable && (
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full gap-2"
+              disabled={loading || !email.trim() || !password.trim()}
+              onClick={async () => {
+                setLoading(true);
+                await tryOfflineLogin();
+                setLoading(false);
+              }}
+            >
+              <WifiOff className="h-4 w-4" />
+              Accesso offline
+            </Button>
+          )}
         </form>
+
 
         <div className="text-center space-y-1">
           {mode === 'login' && (
