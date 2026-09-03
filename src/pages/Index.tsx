@@ -112,7 +112,7 @@ const Index = () => {
 
         {(
           <>
-            <section className="rounded-xl border bg-card shadow-sm p-3 space-y-2.5">
+            <section className="panel p-3 space-y-2.5">
               <div className="flex gap-2 items-end">
                 <div className="flex-1">
                   <label className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-1 block">Nuovo Dipendente</label>
@@ -186,7 +186,7 @@ const Index = () => {
             />
 
             {visibleEmployees.length > 0 && (
-              <section className="rounded-xl border bg-card shadow-sm p-3">
+              <section className="panel p-3">
                 <h2 className="text-xs font-bold uppercase tracking-wide text-muted-foreground mb-2">
                   Riepilogo Mensile
                 </h2>
