@@ -206,7 +206,7 @@ const EmployeeCard = memo(function EmployeeCard({
       </button>
 
       {!isExpanded ? (
-        <div className="grid grid-cols-7 gap-px p-1.5">
+        <div className="grid grid-cols-7 gap-1 p-2">
           {days.map((meta, i) => {
             const entry = entries[i];
             const statusInfo = STATUS_MAP.get(entry.status) || STATUSES[0];
@@ -215,25 +215,28 @@ const EmployeeCard = memo(function EmployeeCard({
               <button
                 key={meta.key}
                 onClick={() => cycleStatus(emp.id, meta.day)}
-                className={`flex flex-col items-center justify-center rounded-md py-1 px-0.5 text-[10px] leading-tight transition-all active:scale-95 border ${
+                className={`relative flex flex-col items-center justify-center rounded-lg min-h-[52px] py-1.5 px-0.5 text-[10px] leading-tight transition-all active:scale-95 border-2 ${
                   entry.status
                     ? statusInfo.style
                     : meta.weekend
                     ? 'bg-muted/60 border-transparent text-muted-foreground'
-                    : 'border-transparent hover:bg-muted/40'
-                }`}
+                    : 'border-dashed border-border/70 hover:bg-muted/40'
+                } ${meta.isToday ? 'ring-2 ring-primary ring-offset-1' : ''}`}
               >
-                <span className="font-medium opacity-70 uppercase">{meta.dowShort}</span>
-                <span className="font-bold text-xs">{meta.dom}</span>
-                {entry.status && (
-                  <span className="font-mono font-bold text-[10px] mt-0.5">
-                    {entry.hours > 0 ? entry.hours : statusInfo.short}
+                <span className="font-semibold opacity-70 uppercase tracking-wide">{meta.dowShort}</span>
+                <span className="font-bold text-sm">{meta.dom}</span>
+                {entry.status ? (
+                  <span className="font-mono font-bold text-[11px] mt-0.5">
+                    {entry.hours > 0 ? `${entry.hours}` : statusInfo.short}
                   </span>
+                ) : (
+                  <span className="text-[10px] opacity-40 mt-0.5">·</span>
                 )}
               </button>
             );
           })}
         </div>
+
       ) : (
         <div className="divide-y">
           {days.map((meta, i) => (
