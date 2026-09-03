@@ -164,7 +164,7 @@ const Index = () => {
             {visibleEmployees.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
                 {visibleEmployees.map(emp => (
-                  <div key={emp.id} className="flex items-center gap-1 bg-secondary rounded-full px-2.5 py-1 text-xs">
+                  <div key={emp.id} className="flex items-center gap-1 bg-card border rounded-full pl-3 pr-2 py-1 text-xs shadow-soft">
                     <span className="font-medium">{emp.name}</span>
                     <button
                       onClick={() => handleRemove(emp.id, emp.name)}
