@@ -121,15 +121,24 @@ const ExpandedDay = memo(function ExpandedDay({ meta, entry, empId, updateField,
   );
 
   return (
-    <div className={`px-3 py-2 space-y-1.5 ${weekend && !entry.status ? 'bg-muted/40' : ''}`}>
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold min-w-[70px]">{meta.longLabel}</span>
+    <div
+      className={`px-3 py-2 space-y-1.5 ${weekend && !entry.status ? 'bg-muted/40' : ''} ${
+        meta.isToday ? 'border-l-4 border-primary bg-primary/5' : 'border-l-4 border-transparent'
+      }`}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-xs font-semibold min-w-[70px] flex items-center gap-1">
+          {meta.longLabel}
+          {meta.isToday && (
+            <span className="text-[9px] font-bold uppercase text-primary tracking-wide">oggi</span>
+          )}
+        </span>
         <div className="flex gap-1">
           {STATUSES.filter(s => s.value !== '').map(s => (
             <button
               key={s.value}
               onClick={() => handleStatusClick(s.value)}
-              className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border transition-all ${
+              className={`min-w-[30px] px-2 py-1 rounded-full text-[11px] font-bold border transition-all active:scale-95 ${
                 entry.status === s.value
                   ? s.style + ' ring-1 ring-offset-1'
                   : 'bg-muted/50 text-muted-foreground border-transparent hover:bg-muted'
@@ -140,6 +149,7 @@ const ExpandedDay = memo(function ExpandedDay({ meta, entry, empId, updateField,
           ))}
         </div>
       </div>
+
 
       <div className="flex gap-2">
         <div className="flex items-center gap-1 w-20 shrink-0">
