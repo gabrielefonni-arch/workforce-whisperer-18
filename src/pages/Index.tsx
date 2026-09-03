@@ -179,6 +179,19 @@ const Index = () => {
               onWeekChange={setSelectedWeekStart}
             />
 
+            {visibleEmployees.length > 0 && (
+              <section className="rounded-xl border bg-card shadow-sm p-3">
+                <h2 className="text-xs font-bold uppercase tracking-wide text-muted-foreground mb-2">
+                  Riepilogo Mensile
+                </h2>
+                <MonthlyTotals
+                  employees={visibleEmployees}
+                  year={selectedYear}
+                  month={selectedMonth}
+                />
+              </section>
+            )}
+
             <EmployeeGrid
               employees={visibleEmployees}
               selectedYear={selectedYear}
@@ -188,16 +201,6 @@ const Index = () => {
               onUpdateDay={updateDayEntry}
             />
 
-            {visibleEmployees.length > 0 && (
-              <div>
-                <h2 className="text-sm font-bold mb-2">Riepilogo Mensile</h2>
-                <MonthlyTotals
-                  employees={visibleEmployees}
-                  year={selectedYear}
-                  month={selectedMonth}
-                />
-              </div>
-            )}
 
           </>
         )}
