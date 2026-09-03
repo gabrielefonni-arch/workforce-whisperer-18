@@ -6,23 +6,24 @@
 
 @layer base {
   :root {
-    --background: 30 15% 97%;
-    --foreground: 25 20% 12%;
+    --background: 30 20% 98%;
+    --foreground: 24 18% 11%;
 
-    --card: 30 20% 99%;
-    --card-foreground: 25 20% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 24 18% 11%;
 
-    --popover: 30 20% 99%;
-    --popover-foreground: 25 20% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 24 18% 11%;
 
-    --primary: 25 80% 42%;
+    --primary: 22 88% 45%;
     --primary-foreground: 0 0% 100%;
+    --primary-glow: 32 95% 55%;
 
-    --secondary: 30 15% 92%;
-    --secondary-foreground: 25 20% 18%;
+    --secondary: 28 20% 95%;
+    --secondary-foreground: 24 20% 20%;
 
-    --muted: 30 10% 94%;
-    --muted-foreground: 25 10% 45%;
+    --muted: 28 16% 95%;
+    --muted-foreground: 25 8% 44%;
 
     --accent: 38 92% 50%;
     --accent-foreground: 25 30% 10%;
@@ -30,17 +31,24 @@
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 30 12% 88%;
-    --input: 30 12% 88%;
-    --ring: 25 80% 42%;
+    --border: 28 14% 90%;
+    --input: 28 14% 90%;
+    --ring: 22 88% 45%;
 
-    --radius: 0.75rem;
+    --radius: 0.7rem;
 
-    --success: 145 63% 42%;
+    --success: 152 58% 38%;
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 50%;
-    --info: 210 70% 50%;
+    --info: 214 78% 50%;
     --absence: 0 72% 51%;
+
+    --surface: 30 22% 96%;
+    --gradient-brand: linear-gradient(120deg, hsl(var(--primary)), hsl(var(--primary-glow)));
+    --shadow-xs: 0 1px 2px hsl(24 20% 12% / 0.06);
+    --shadow-sm: 0 1px 3px hsl(24 20% 12% / 0.07), 0 1px 2px hsl(24 20% 12% / 0.04);
+    --shadow-md: 0 4px 14px -4px hsl(24 20% 12% / 0.12);
+    --shadow-brand: 0 8px 24px -10px hsl(var(--primary) / 0.45);
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -51,6 +59,7 @@
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
+
 
   .dark {
     --background: 25 15% 8%;
@@ -85,15 +94,16 @@
 
 /* Ditta 2 theme – blue/teal palette */
 .theme-ditta2 {
-  --primary: 210 70% 38%;
+  --primary: 208 78% 38%;
   --primary-foreground: 0 0% 100%;
+  --primary-glow: 188 72% 44%;
   --accent: 185 70% 42%;
   --accent-foreground: 210 30% 10%;
-  --ring: 210 70% 38%;
-  --success: 145 63% 42%;
+  --ring: 208 78% 38%;
+  --success: 152 58% 38%;
   --success-foreground: 0 0% 100%;
   --warning: 38 92% 50%;
-  --info: 210 70% 50%;
+  --info: 214 78% 50%;
   --absence: 0 72% 51%;
 }
 
@@ -102,13 +112,43 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
     font-family: 'Inter', system-ui, sans-serif;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'ss01';
+  }
+  h1, h2, h3 {
+    letter-spacing: -0.015em;
   }
 }
 
 @layer utilities {
   .font-mono {
     font-family: 'JetBrains Mono', monospace;
+    font-variant-numeric: tabular-nums;
+  }
+  .bg-surface {
+    background-color: hsl(var(--surface));
+  }
+  .bg-brand-gradient {
+    background-image: var(--gradient-brand);
+  }
+  .shadow-soft {
+    box-shadow: var(--shadow-sm);
+  }
+  .shadow-elevated {
+    box-shadow: var(--shadow-md);
+  }
+  .shadow-brand {
+    box-shadow: var(--shadow-brand);
+  }
+  .panel {
+    @apply rounded-xl border bg-card shadow-soft;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 }
