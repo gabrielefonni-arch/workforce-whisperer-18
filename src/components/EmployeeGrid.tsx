@@ -205,14 +205,14 @@ const EmployeeCard = memo(function EmployeeCard({
   const totalHours = useMemo(() => entries.reduce((s, e) => s + e.hours, 0), [entries]);
 
   return (
-    <div className="bg-card rounded-lg border shadow-sm overflow-hidden">
+    <div className="panel overflow-hidden">
       <button
         onClick={() => onToggle(emp.id)}
-        className="w-full px-3 py-2.5 flex items-center justify-between bg-secondary/50 border-b hover:bg-secondary/70 transition-colors"
+        className="w-full px-3 py-2.5 flex items-center justify-between bg-muted/50 border-b hover:bg-muted transition-colors"
       >
         <div className="flex items-center gap-2">
           <span className="font-semibold text-sm">{emp.name}</span>
-          <span className="text-xs text-muted-foreground font-mono">{totalHours}h</span>
+          <span className="text-[11px] font-mono font-bold text-primary bg-primary/10 rounded-full px-2 py-0.5">{totalHours}h</span>
         </div>
         {isExpanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
       </button>
