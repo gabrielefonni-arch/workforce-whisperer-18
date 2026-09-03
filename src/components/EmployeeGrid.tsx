@@ -275,10 +275,12 @@ export function EmployeeGrid({ employees, selectedYear, selectedMonth, selectedW
       day,
       key: dateKey(day),
       weekend: isWeekend(day),
+      isToday: dateKey(day) === dateKey(new Date()),
       dowShort: format(day, 'EEE', { locale: it }).slice(0, 2),
       dom: format(day, 'd'),
       longLabel: format(day, 'EEE d MMM', { locale: it }),
     }));
+
   }, [selectedYear, selectedMonth, selectedWeekStart]);
 
   const dayByKey = useMemo(() => new Map(visibleDays.map(m => [m.key, m])), [visibleDays]);
