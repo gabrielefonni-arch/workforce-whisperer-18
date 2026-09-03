@@ -86,10 +86,12 @@ interface DayMeta {
   day: Date;
   key: string;
   weekend: boolean;
+  isToday: boolean;
   dowShort: string;
   dom: string;
   longLabel: string;
 }
+
 
 interface ExpandedDayProps {
   meta: DayMeta;
@@ -119,15 +121,24 @@ const ExpandedDay = memo(function ExpandedDay({ meta, entry, empId, updateField,
   );
 
   return (
-    <div className={`px-3 py-2 space-y-1.5 ${weekend && !entry.status ? 'bg-muted/40' : ''}`}>
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold min-w-[70px]">{meta.longLabel}</span>
+    <div
+      className={`px-3 py-2 space-y-1.5 ${weekend && !entry.status ? 'bg-muted/40' : ''} ${
+        meta.isToday ? 'border-l-4 border-primary bg-primary/5' : 'border-l-4 border-transparent'
+      }`}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-xs font-semibold min-w-[70px] flex items-center gap-1">
+          {meta.longLabel}
+          {meta.isToday && (
+            <span className="text-[9px] font-bold uppercase text-primary tracking-wide">oggi</span>
+          )}
+        </span>
         <div className="flex gap-1">
           {STATUSES.filter(s => s.value !== '').map(s => (
             <button
               key={s.value}
               onClick={() => handleStatusClick(s.value)}
-              className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border transition-all ${
+              className={`min-w-[30px] px-2 py-1 rounded-full text-[11px] font-bold border transition-all active:scale-95 ${
                 entry.status === s.value
                   ? s.style + ' ring-1 ring-offset-1'
                   : 'bg-muted/50 text-muted-foreground border-transparent hover:bg-muted'
@@ -138,6 +149,7 @@ const ExpandedDay = memo(function ExpandedDay({ meta, entry, empId, updateField,
           ))}
         </div>
       </div>
+
 
       <div className="flex gap-2">
         <div className="flex items-center gap-1 w-20 shrink-0">
@@ -206,7 +218,7 @@ const EmployeeCard = memo(function EmployeeCard({
       </button>
 
       {!isExpanded ? (
-        <div className="grid grid-cols-7 gap-px p-1.5">
+        <div className="grid grid-cols-7 gap-1 p-2">
           {days.map((meta, i) => {
             const entry = entries[i];
             const statusInfo = STATUS_MAP.get(entry.status) || STATUSES[0];
@@ -215,25 +227,28 @@ const EmployeeCard = memo(function EmployeeCard({
               <button
                 key={meta.key}
                 onClick={() => cycleStatus(emp.id, meta.day)}
-                className={`flex flex-col items-center justify-center rounded-md py-1 px-0.5 text-[10px] leading-tight transition-all active:scale-95 border ${
+                className={`relative flex flex-col items-center justify-center rounded-lg min-h-[52px] py-1.5 px-0.5 text-[10px] leading-tight transition-all active:scale-95 border-2 ${
                   entry.status
                     ? statusInfo.style
                     : meta.weekend
                     ? 'bg-muted/60 border-transparent text-muted-foreground'
-                    : 'border-transparent hover:bg-muted/40'
-                }`}
+                    : 'border-dashed border-border/70 hover:bg-muted/40'
+                } ${meta.isToday ? 'ring-2 ring-primary ring-offset-1' : ''}`}
               >
-                <span className="font-medium opacity-70 uppercase">{meta.dowShort}</span>
-                <span className="font-bold text-xs">{meta.dom}</span>
-                {entry.status && (
-                  <span className="font-mono font-bold text-[10px] mt-0.5">
-                    {entry.hours > 0 ? entry.hours : statusInfo.short}
+                <span className="font-semibold opacity-70 uppercase tracking-wide">{meta.dowShort}</span>
+                <span className="font-bold text-sm">{meta.dom}</span>
+                {entry.status ? (
+                  <span className="font-mono font-bold text-[11px] mt-0.5">
+                    {entry.hours > 0 ? `${entry.hours}` : statusInfo.short}
                   </span>
+                ) : (
+                  <span className="text-[10px] opacity-40 mt-0.5">·</span>
                 )}
               </button>
             );
           })}
         </div>
+
       ) : (
         <div className="divide-y">
           {days.map((meta, i) => (
@@ -270,10 +285,12 @@ export function EmployeeGrid({ employees, selectedYear, selectedMonth, selectedW
       day,
       key: dateKey(day),
       weekend: isWeekend(day),
+      isToday: dateKey(day) === dateKey(new Date()),
       dowShort: format(day, 'EEE', { locale: it }).slice(0, 2),
       dom: format(day, 'd'),
       longLabel: format(day, 'EEE d MMM', { locale: it }),
     }));
+
   }, [selectedYear, selectedMonth, selectedWeekStart]);
 
   const dayByKey = useMemo(() => new Map(visibleDays.map(m => [m.key, m])), [visibleDays]);

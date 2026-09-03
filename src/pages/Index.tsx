@@ -109,49 +109,52 @@ const Index = () => {
       <main className="max-w-[1600px] mx-auto px-3 py-4 space-y-4">
         {(
           <>
-            <div className="flex gap-2 items-end">
-              <div className="flex-1">
-                <label className="text-xs font-medium text-muted-foreground mb-1 block">Nuovo Dipendente</label>
-                <Input
-                  value={newName}
-                  onChange={e => setNewName(e.target.value)}
-                  placeholder="Nome e cognome"
-                  className="h-9 text-sm"
-                  onKeyDown={e => e.key === 'Enter' && handleAddEmployee()}
-                />
+            <section className="rounded-xl border bg-card shadow-sm p-3 space-y-2.5">
+              <div className="flex gap-2 items-end">
+                <div className="flex-1">
+                  <label className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-1 block">Nuovo Dipendente</label>
+                  <Input
+                    value={newName}
+                    onChange={e => setNewName(e.target.value)}
+                    placeholder="Nome e cognome"
+                    className="h-10 text-sm"
+                    onKeyDown={e => e.key === 'Enter' && handleAddEmployee()}
+                  />
+                </div>
+                <Button onClick={handleAddEmployee} size="sm" className="gap-1 h-10 px-3">
+                  <UserPlus className="h-4 w-4" />
+                  Aggiungi
+                </Button>
               </div>
-              <Button onClick={handleAddEmployee} size="sm" className="gap-1 h-9">
-                <UserPlus className="h-3.5 w-3.5" />
-                Aggiungi
-              </Button>
-            </div>
 
-            <div className="relative">
-              <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-              <Input
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder="Cerca dipendente o cantiere…"
-                className="h-9 text-sm pl-8 pr-8"
-              />
-              {search && (
-                <button
-                  onClick={() => setSearch('')}
-                  aria-label="Cancella ricerca"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
+              <div className="relative">
+                <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                <Input
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  placeholder="Cerca dipendente o cantiere…"
+                  className="h-10 text-sm pl-9 pr-9 rounded-full bg-muted/40 border-transparent focus-visible:bg-background"
+                />
+                {search && (
+                  <button
+                    onClick={() => setSearch('')}
+                    aria-label="Cancella ricerca"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+
+              {query && (
+                <p className="text-xs text-muted-foreground">
+                  {visibleEmployees.length === 0
+                    ? 'Nessun risultato per la ricerca'
+                    : `${visibleEmployees.length} di ${data.employees.length} dipendenti`}
+                </p>
               )}
-            </div>
+            </section>
 
-            {query && (
-              <p className="text-xs text-muted-foreground -mt-2">
-                {visibleEmployees.length === 0
-                  ? 'Nessun risultato per la ricerca'
-                  : `${visibleEmployees.length} di ${data.employees.length} dipendenti`}
-              </p>
-            )}
 
             <Legend />
 
@@ -179,6 +182,19 @@ const Index = () => {
               onWeekChange={setSelectedWeekStart}
             />
 
+            {visibleEmployees.length > 0 && (
+              <section className="rounded-xl border bg-card shadow-sm p-3">
+                <h2 className="text-xs font-bold uppercase tracking-wide text-muted-foreground mb-2">
+                  Riepilogo Mensile
+                </h2>
+                <MonthlyTotals
+                  employees={visibleEmployees}
+                  year={selectedYear}
+                  month={selectedMonth}
+                />
+              </section>
+            )}
+
             <EmployeeGrid
               employees={visibleEmployees}
               selectedYear={selectedYear}
@@ -188,16 +204,6 @@ const Index = () => {
               onUpdateDay={updateDayEntry}
             />
 
-            {visibleEmployees.length > 0 && (
-              <div>
-                <h2 className="text-sm font-bold mb-2">Riepilogo Mensile</h2>
-                <MonthlyTotals
-                  employees={visibleEmployees}
-                  year={selectedYear}
-                  month={selectedMonth}
-                />
-              </div>
-            )}
 
           </>
         )}
