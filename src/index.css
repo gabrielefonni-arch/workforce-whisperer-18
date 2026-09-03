@@ -94,15 +94,16 @@
 
 /* Ditta 2 theme – blue/teal palette */
 .theme-ditta2 {
-  --primary: 210 70% 38%;
+  --primary: 208 78% 38%;
   --primary-foreground: 0 0% 100%;
+  --primary-glow: 188 72% 44%;
   --accent: 185 70% 42%;
   --accent-foreground: 210 30% 10%;
-  --ring: 210 70% 38%;
-  --success: 145 63% 42%;
+  --ring: 208 78% 38%;
+  --success: 152 58% 38%;
   --success-foreground: 0 0% 100%;
   --warning: 38 92% 50%;
-  --info: 210 70% 50%;
+  --info: 214 78% 50%;
   --absence: 0 72% 51%;
 }
 
@@ -111,13 +112,45 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
     font-family: 'Inter', system-ui, sans-serif;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'ss01';
+  }
+  h1, h2, h3 {
+    letter-spacing: -0.015em;
   }
 }
 
 @layer utilities {
   .font-mono {
     font-family: 'JetBrains Mono', monospace;
+    font-variant-numeric: tabular-nums;
   }
+  .bg-surface {
+    background-color: hsl(var(--surface));
+  }
+  .bg-brand-gradient {
+    background-image: var(--gradient-brand);
+  }
+  .shadow-soft {
+    box-shadow: var(--shadow-sm);
+  }
+  .shadow-elevated {
+    box-shadow: var(--shadow-md);
+  }
+  .shadow-brand {
+    box-shadow: var(--shadow-brand);
+  }
+  .panel {
+    @apply rounded-xl border bg-card shadow-soft;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
 }
