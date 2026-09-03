@@ -74,97 +74,91 @@ const Index = () => {
   const headerSubtitle = 'Gestione Dipendenti · Presenze';
 
   return (
-    <div className={`min-h-screen bg-surface ${currentSection.themeClass}`}>
-      <header className="bg-brand-gradient text-primary-foreground sticky top-0 z-50 shadow-brand">
-        <div className="max-w-[1600px] mx-auto px-3 py-2 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-lg bg-primary-foreground/15 backdrop-blur-sm flex items-center justify-center shrink-0 ring-1 ring-primary-foreground/20">
-              <img src={logoImg} alt="Logo Edilristrutturazioni" className="h-5 w-5 sm:h-6 sm:w-6 object-contain" />
-            </div>
+    <div className={`min-h-screen bg-background ${currentSection.themeClass}`}>
+      <header className="bg-primary text-primary-foreground sticky top-0 z-50 shadow-lg">
+        <div className="max-w-[1600px] mx-auto px-2 py-1.5 sm:px-3 sm:py-2 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <img src={logoImg} alt="Logo Edilristrutturazioni" className="h-6 w-6 sm:h-7 sm:w-7 object-contain shrink-0" />
             <div className="min-w-0">
-              <h1 className="text-[13px] sm:text-base font-extrabold tracking-tight leading-tight truncate">{headerTitle}</h1>
-              <p className="text-[10px] opacity-80 font-medium hidden sm:block">{headerSubtitle}</p>
+              <h1 className="text-xs sm:text-sm font-extrabold tracking-tight leading-tight truncate">{headerTitle}</h1>
+              <p className="text-[9px] opacity-75 font-medium hidden sm:block">{headerSubtitle}</p>
             </div>
           </div>
           <div className="flex gap-1 shrink-0">
-            <Button onClick={() => toast.success('Dati salvati correttamente')} variant="secondary" size="sm" className="gap-1 text-[11px] px-2 h-8 rounded-lg bg-primary-foreground/15 text-primary-foreground hover:bg-primary-foreground/25 border-0 backdrop-blur-sm">
-              <Save className="h-3.5 w-3.5" />
+            <Button onClick={() => toast.success('Dati salvati correttamente')} variant="secondary" size="sm" className="gap-1 text-[11px] px-1.5 sm:px-2 h-7 sm:h-8">
+              <Save className="h-3 w-3" />
               <span className="hidden sm:inline">Salva</span>
             </Button>
-            <Button onClick={handleExport} variant="secondary" size="sm" className="gap-1 text-[11px] px-2 h-8 rounded-lg bg-primary-foreground/15 text-primary-foreground hover:bg-primary-foreground/25 border-0 backdrop-blur-sm">
-              <Download className="h-3.5 w-3.5" />
+            <Button onClick={handleExport} variant="secondary" size="sm" className="gap-1 text-[11px] px-1.5 sm:px-2 h-7 sm:h-8">
+              <Download className="h-3 w-3" />
               <span className="hidden sm:inline">PDF</span>
             </Button>
             <ArchiveSheet />
             <SettingsSheet />
-            <Button onClick={handleSignOut} variant="secondary" size="sm" className="gap-1 text-[11px] px-2 h-8 rounded-lg bg-primary-foreground/15 text-primary-foreground hover:bg-primary-foreground/25 border-0 backdrop-blur-sm">
-              <LogOut className="h-3.5 w-3.5" />
+            <Button onClick={handleSignOut} variant="secondary" size="sm" className="gap-1 text-[11px] px-1.5 sm:px-2 h-7 sm:h-8">
+              <LogOut className="h-3 w-3" />
               <span className="hidden sm:inline">Esci</span>
             </Button>
           </div>
         </div>
-        <div className="max-w-[1600px] mx-auto px-3 pb-2.5 pt-0.5">
+        <div className="max-w-[1600px] mx-auto px-3 pb-2 pt-1">
           <CompanySelector />
         </div>
       </header>
 
       <main className="max-w-[1600px] mx-auto px-3 py-4 space-y-4">
-
         {(
           <>
-            <section className="panel p-3 space-y-2.5">
-              <div className="flex gap-2 items-end">
-                <div className="flex-1">
-                  <label className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-1 block">Nuovo Dipendente</label>
-                  <Input
-                    value={newName}
-                    onChange={e => setNewName(e.target.value)}
-                    placeholder="Nome e cognome"
-                    className="h-10 text-sm"
-                    onKeyDown={e => e.key === 'Enter' && handleAddEmployee()}
-                  />
-                </div>
-                <Button onClick={handleAddEmployee} size="sm" className="gap-1 h-10 px-3">
-                  <UserPlus className="h-4 w-4" />
-                  Aggiungi
-                </Button>
-              </div>
-
-              <div className="relative">
-                <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+            <div className="flex gap-2 items-end">
+              <div className="flex-1">
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">Nuovo Dipendente</label>
                 <Input
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                  placeholder="Cerca dipendente o cantiere…"
-                  className="h-10 text-sm pl-9 pr-9 rounded-full bg-muted/40 border-transparent focus-visible:bg-background"
+                  value={newName}
+                  onChange={e => setNewName(e.target.value)}
+                  placeholder="Nome e cognome"
+                  className="h-9 text-sm"
+                  onKeyDown={e => e.key === 'Enter' && handleAddEmployee()}
                 />
-                {search && (
-                  <button
-                    onClick={() => setSearch('')}
-                    aria-label="Cancella ricerca"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
               </div>
+              <Button onClick={handleAddEmployee} size="sm" className="gap-1 h-9">
+                <UserPlus className="h-3.5 w-3.5" />
+                Aggiungi
+              </Button>
+            </div>
 
-              {query && (
-                <p className="text-xs text-muted-foreground">
-                  {visibleEmployees.length === 0
-                    ? 'Nessun risultato per la ricerca'
-                    : `${visibleEmployees.length} di ${data.employees.length} dipendenti`}
-                </p>
+            <div className="relative">
+              <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+              <Input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Cerca dipendente o cantiere…"
+                className="h-9 text-sm pl-8 pr-8"
+              />
+              {search && (
+                <button
+                  onClick={() => setSearch('')}
+                  aria-label="Cancella ricerca"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
               )}
-            </section>
+            </div>
 
+            {query && (
+              <p className="text-xs text-muted-foreground -mt-2">
+                {visibleEmployees.length === 0
+                  ? 'Nessun risultato per la ricerca'
+                  : `${visibleEmployees.length} di ${data.employees.length} dipendenti`}
+              </p>
+            )}
 
             <Legend />
 
             {visibleEmployees.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
                 {visibleEmployees.map(emp => (
-                  <div key={emp.id} className="flex items-center gap-1 bg-card border rounded-full pl-3 pr-2 py-1 text-xs shadow-soft">
+                  <div key={emp.id} className="flex items-center gap-1 bg-secondary rounded-full px-2.5 py-1 text-xs">
                     <span className="font-medium">{emp.name}</span>
                     <button
                       onClick={() => handleRemove(emp.id, emp.name)}
@@ -185,19 +179,6 @@ const Index = () => {
               onWeekChange={setSelectedWeekStart}
             />
 
-            {visibleEmployees.length > 0 && (
-              <section className="panel p-3">
-                <h2 className="text-xs font-bold uppercase tracking-wide text-muted-foreground mb-2">
-                  Riepilogo Mensile
-                </h2>
-                <MonthlyTotals
-                  employees={visibleEmployees}
-                  year={selectedYear}
-                  month={selectedMonth}
-                />
-              </section>
-            )}
-
             <EmployeeGrid
               employees={visibleEmployees}
               selectedYear={selectedYear}
@@ -207,6 +188,16 @@ const Index = () => {
               onUpdateDay={updateDayEntry}
             />
 
+            {visibleEmployees.length > 0 && (
+              <div>
+                <h2 className="text-sm font-bold mb-2">Riepilogo Mensile</h2>
+                <MonthlyTotals
+                  employees={visibleEmployees}
+                  year={selectedYear}
+                  month={selectedMonth}
+                />
+              </div>
+            )}
 
           </>
         )}

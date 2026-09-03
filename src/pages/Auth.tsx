@@ -101,12 +101,10 @@ export default function Auth() {
   const title = mode === 'forgot' ? 'Recupera Password' : mode === 'login' ? 'Accedi al tuo account' : 'Crea un nuovo account';
 
   return (
-    <div className="min-h-screen bg-surface flex items-center justify-center px-4">
-      <div className="w-full max-w-sm panel p-6 space-y-6">
+    <div className="min-h-screen bg-background flex items-center justify-center px-4">
+      <div className="w-full max-w-sm space-y-6">
         <div className="flex flex-col items-center gap-3">
-          <div className="h-16 w-16 rounded-2xl bg-brand-gradient shadow-brand flex items-center justify-center">
-            <img src={logoImg} alt="Logo" className="h-10 w-10 object-contain" />
-          </div>
+          <img src={logoImg} alt="Logo" className="h-16 w-16 object-contain" />
           <h1 className="text-xl font-extrabold text-foreground">Edilristrutturazioni</h1>
           <p className="text-sm text-muted-foreground">{title}</p>
         </div>

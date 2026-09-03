@@ -40,22 +40,27 @@ export const MonthlyTotals = memo(function MonthlyTotals({ employees, year, mont
         const locations = Object.entries(locationCount).sort((a, b) => b[1] - a[1]);
 
         return (
-          <div key={emp.id} className="panel overflow-hidden">
+          <div key={emp.id} className="bg-card border rounded-lg overflow-hidden shadow-sm">
             {/* Name + stats row */}
-            <div className="px-3 py-3 flex items-center justify-between gap-3 border-b bg-muted/40">
-              <h3 className="text-sm font-bold leading-tight truncate">{emp.name}</h3>
-              <div className="flex gap-1.5 text-xs shrink-0">
-                {[
-                  { v: totalHours, l: 'ore', c: 'text-foreground' },
-                  { v: presentDays, l: 'pres.', c: 'text-success' },
-                  { v: injuryDays, l: 'infor.', c: 'text-warning' },
-                  { v: sickDays, l: 'mal.', c: 'text-absence' },
-                ].map(s => (
-                  <div key={s.l} className="text-center rounded-lg bg-card border px-2 py-1 min-w-[46px]">
-                    <div className={`text-sm font-extrabold font-mono leading-none ${s.c}`}>{s.v}</div>
-                    <div className="text-[10px] text-muted-foreground mt-0.5">{s.l}</div>
-                  </div>
-                ))}
+            <div className="px-3 py-3 flex items-start justify-between gap-3 border-b bg-secondary/30">
+              <h3 className="text-base font-bold leading-tight">{emp.name}</h3>
+              <div className="flex gap-3 text-xs shrink-0">
+                <div className="text-center">
+                  <div className="text-base font-extrabold text-foreground">{totalHours}</div>
+                  <div className="text-muted-foreground">ore</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-base font-extrabold text-success">{presentDays}</div>
+                  <div className="text-muted-foreground">pres.</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-base font-extrabold text-warning">{injuryDays}</div>
+                  <div className="text-muted-foreground">infor.</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-base font-extrabold text-absence">{sickDays}</div>
+                  <div className="text-muted-foreground">mal.</div>
+                </div>
               </div>
             </div>
 
@@ -67,7 +72,7 @@ export const MonthlyTotals = memo(function MonthlyTotals({ employees, year, mont
                   Cantieri / Vie
                 </div>
                 {locations.map(([loc, count]) => (
-                  <div key={loc} className="flex items-center justify-between text-xs rounded-md px-2 py-1 odd:bg-muted/40">
+                  <div key={loc} className="flex items-center justify-between text-xs">
                     <span className="truncate mr-2">{loc}</span>
                     <span className="shrink-0 text-muted-foreground font-mono">{count}g</span>
                   </div>

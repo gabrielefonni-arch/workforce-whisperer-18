@@ -7,10 +7,10 @@ const items = [
 
 export function Legend() {
   return (
-    <div className="flex flex-wrap gap-1.5">
+    <div className="flex flex-wrap gap-3">
       {items.map(i => (
-        <div key={i.label} className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground bg-card border rounded-full pl-1.5 pr-2.5 py-1 shadow-soft">
-          <div className={`w-2.5 h-2.5 rounded-full border ${i.className}`} />
+        <div key={i.label} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <div className={`w-3 h-3 rounded-sm border ${i.className}`} />
           {i.label}
         </div>
       ))}

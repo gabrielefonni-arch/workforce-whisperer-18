@@ -30,13 +30,13 @@ export function WeekMonthNavigator({ selectedYear, selectedMonth, selectedWeekSt
   };
 
   return (
-    <div className="panel p-2 space-y-2">
+    <div className="space-y-3">
       {/* Month nav */}
       <div className="flex items-center justify-between">
         <Button variant="ghost" size="icon" onClick={prevMonth}>
           <ChevronLeft className="h-5 w-5" />
         </Button>
-        <h2 className="text-base font-bold capitalize">
+        <h2 className="text-lg font-bold">
           {MONTHS_IT[selectedMonth]} {selectedYear}
         </h2>
         <Button variant="ghost" size="icon" onClick={nextMonth}>
@@ -48,10 +48,10 @@ export function WeekMonthNavigator({ selectedYear, selectedMonth, selectedWeekSt
       <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
         <button
           onClick={() => onWeekChange(null)}
-          className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+          className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
             selectedWeekStart === null
-              ? 'bg-primary text-primary-foreground shadow-brand'
-              : 'bg-muted text-muted-foreground hover:bg-secondary hover:text-secondary-foreground'
+              ? 'bg-primary text-primary-foreground'
+              : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
           }`}
         >
           Tutto il mese
@@ -64,10 +64,10 @@ export function WeekMonthNavigator({ selectedYear, selectedMonth, selectedWeekSt
             <button
               key={i}
               onClick={() => onWeekChange(start)}
-              className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+              className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
                 isActive
-                  ? 'bg-primary text-primary-foreground shadow-brand'
-                  : 'bg-muted text-muted-foreground hover:bg-secondary hover:text-secondary-foreground'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
               }`}
             >
               {format(start, 'd', { locale: it })}–{format(end, 'd MMM', { locale: it })}
