@@ -86,10 +86,12 @@ interface DayMeta {
   day: Date;
   key: string;
   weekend: boolean;
+  isToday: boolean;
   dowShort: string;
   dom: string;
   longLabel: string;
 }
+
 
 interface ExpandedDayProps {
   meta: DayMeta;
