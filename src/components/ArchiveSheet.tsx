@@ -67,7 +67,7 @@ type Grouped = {
   }[];
 };
 
-export function ArchiveSheet({ fullWidth = false }: { fullWidth?: boolean } = {}) {
+export function ArchiveSheet() {
   const { user } = useAuth();
   const { currentSection } = useCompany();
   const sectionId = currentSection.id;
@@ -206,17 +206,10 @@ export function ArchiveSheet({ fullWidth = false }: { fullWidth?: boolean } = {}
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetTrigger asChild>
-        {fullWidth ? (
-          <Button variant="ghost" size="sm" className="w-full justify-start gap-2 h-9 text-sm">
-            <Archive className="h-4 w-4" />
-            Archivio
-          </Button>
-        ) : (
-          <Button variant="secondary" size="sm" className="gap-1 text-[11px] px-1.5 sm:px-2 h-7 sm:h-8">
-            <Archive className="h-3 w-3" />
-            <span className="hidden sm:inline">Archivio</span>
-          </Button>
-        )}
+        <Button variant="secondary" size="sm" className="gap-1 text-[11px] px-1.5 sm:px-2 h-7 sm:h-8">
+          <Archive className="h-3 w-3" />
+          <span className="hidden sm:inline">Archivio</span>
+        </Button>
       </SheetTrigger>
       <SheetContent side="right" className="w-full sm:w-[480px] flex flex-col p-0">
         <div className="px-5 pt-5 pb-3 border-b">
