@@ -1,0 +1,36 @@
+name: Keepalive database (secondo ping)
+
+# Secondo pinger indipendente dal primo: gira ogni giorno a un'ora diversa.
+# Se uno dei due workflow salta (o GitHub lo ritarda), l'altro tiene comunque
+# il progetto database attivo. Il piano gratuito sospende dopo 7 giorni.
+on:
+  schedule:
+    - cron: '43 17 * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping progetto (ridondante)
+        env:
+          PROJECT_URL: https://vdfglzacnhtbzvczzpni.supabase.co
+          PUBLISHABLE_KEY: sb_publishable_DH8l6Hu5AaOPYvv0TImEpw_-EXAK2Qy
+        run: |
+          set -e
+          ok=0
+          for attempt in 1 2 3; do
+            code=$(curl -s -m 20 -o /dev/null -w '%{http_code}' "$PROJECT_URL/auth/v1/health" || echo 000)
+            code2=$(curl -s -m 20 -o /dev/null -w '%{http_code}' \
+              -H "apikey: $PUBLISHABLE_KEY" \
+              -H "Authorization: Bearer $PUBLISHABLE_KEY" \
+              "$PROJECT_URL/rest/v1/?select=1" || echo 000)
+            echo "tentativo $attempt: auth=$code rest=$code2"
+            if [ "$code" != "000" ] || [ "$code2" != "000" ]; then ok=1; break; fi
+            sleep 15
+          done
+          if [ "$ok" = "0" ]; then
+            echo "::error::Il progetto non risponde: potrebbe essere sospeso."
+            exit 1
+          fi
+          echo "Progetto attivo."
