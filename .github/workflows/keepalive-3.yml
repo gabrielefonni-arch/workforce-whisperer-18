@@ -1,0 +1,35 @@
+name: Keepalive database (terzo ping di riserva)
+
+# Terza rete di sicurezza: ogni 2 giorni, orario diverso dagli altri due.
+# Con tre workflow indipendenti il database resta attivo anche se uno salta.
+on:
+  schedule:
+    - cron: '9 2 */2 * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping progetto (riserva)
+        env:
+          PROJECT_URL: https://vdfglzacnhtbzvczzpni.supabase.co
+          PUBLISHABLE_KEY: sb_publishable_DH8l6Hu5AaOPYvv0TImEpw_-EXAK2Qy
+        run: |
+          set -e
+          ok=0
+          for attempt in 1 2 3; do
+            code=$(curl -s -m 20 -o /dev/null -w '%{http_code}' "$PROJECT_URL/auth/v1/health" || echo 000)
+            code2=$(curl -s -m 20 -o /dev/null -w '%{http_code}' \
+              -H "apikey: $PUBLISHABLE_KEY" \
+              -H "Authorization: Bearer $PUBLISHABLE_KEY" \
+              "$PROJECT_URL/rest/v1/?select=1" || echo 000)
+            echo "tentativo $attempt: auth=$code rest=$code2"
+            if [ "$code" != "000" ] || [ "$code2" != "000" ]; then ok=1; break; fi
+            sleep 15
+          done
+          if [ "$ok" = "0" ]; then
+            echo "::error::Il progetto non risponde: potrebbe essere sospeso."
+            exit 1
+          fi
+          echo "Progetto attivo."
