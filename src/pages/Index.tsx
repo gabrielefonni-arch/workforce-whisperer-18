@@ -8,7 +8,8 @@ import { MonthlyTotals } from '@/components/MonthlyTotals';
 import { Legend } from '@/components/Legend';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { UserPlus, Download, Trash2, LogOut, Save, Search, X } from 'lucide-react';
+import { UserPlus, Download, Trash2, LogOut, Save, Search, X, MoreHorizontal } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import logoImg from '@/assets/logo.png';
 import { toast } from 'sonner';
 import { CompanySelector } from '@/components/CompanySelector';
@@ -84,21 +85,44 @@ const Index = () => {
               <p className="text-[9px] opacity-75 font-medium hidden sm:block">{headerSubtitle}</p>
             </div>
           </div>
-          <div className="flex gap-1 shrink-0">
-            <Button onClick={() => toast.success('Dati salvati correttamente')} variant="secondary" size="sm" className="gap-1 text-[11px] px-1.5 sm:px-2 h-7 sm:h-8">
-              <Save className="h-3 w-3" />
+          <div className="flex gap-1 shrink-0 items-center">
+            <Button onClick={() => toast.success('Dati salvati correttamente')} variant="secondary" size="sm" className="gap-1 text-[11px] px-2 h-8">
+              <Save className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Salva</span>
             </Button>
-            <Button onClick={handleExport} variant="secondary" size="sm" className="gap-1 text-[11px] px-1.5 sm:px-2 h-7 sm:h-8">
-              <Download className="h-3 w-3" />
+            <Button onClick={handleExport} variant="secondary" size="sm" className="gap-1 text-[11px] px-2 h-8">
+              <Download className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">PDF</span>
             </Button>
-            <ArchiveSheet />
-            <SettingsSheet />
-            <Button onClick={handleSignOut} variant="secondary" size="sm" className="gap-1 text-[11px] px-1.5 sm:px-2 h-7 sm:h-8">
-              <LogOut className="h-3 w-3" />
-              <span className="hidden sm:inline">Esci</span>
-            </Button>
+
+            {/* Desktop: pulsanti separati */}
+            <div className="hidden sm:flex gap-1 items-center">
+              <ArchiveSheet />
+              <SettingsSheet />
+              <Button onClick={handleSignOut} variant="secondary" size="sm" className="gap-1 text-[11px] px-2 h-8">
+                <LogOut className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Esci</span>
+              </Button>
+            </div>
+
+            {/* Mobile: menu compatto */}
+            <div className="sm:hidden">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="secondary" size="sm" aria-label="Altre opzioni" className="px-2 h-8">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent align="end" className="w-52 p-1.5">
+                  <ArchiveSheet fullWidth />
+                  <SettingsSheet fullWidth />
+                  <Button onClick={handleSignOut} variant="ghost" size="sm" className="w-full justify-start gap-2 h-9 text-sm text-destructive hover:text-destructive">
+                    <LogOut className="h-4 w-4" />
+                    Esci
+                  </Button>
+                </PopoverContent>
+              </Popover>
+            </div>
           </div>
         </div>
         <div className="max-w-[1600px] mx-auto px-3 pb-2 pt-1">

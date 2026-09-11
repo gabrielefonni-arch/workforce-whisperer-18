@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import { CompanyProvider } from "@/contexts/CompanyContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
@@ -34,6 +35,7 @@ function AuthRoute() {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
+    <ThemeProvider>
     <AuthProvider>
       <CompanyProvider>
         <TooltipProvider>
@@ -54,6 +56,7 @@ const App = () => (
         </TooltipProvider>
       </CompanyProvider>
     </AuthProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 
